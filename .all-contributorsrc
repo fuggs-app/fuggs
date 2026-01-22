@@ -9,16 +9,6 @@
   "contributorsPerLine": 7,
   "contributors": [
     {
-      "login": "schitcrafter",
-      "name": "Emilia Jaser",
-      "avatar_url": "https://avatars.githubusercontent.com/u/58911293?v=4",
-      "profile": "https://github.com/schitcrafter",
-      "contributions": [
-        "tool",
-        "code"
-      ]
-    },
-    {
       "login": "d135-1r43",
       "name": "Markus Herhoffer",
       "avatar_url": "https://avatars.githubusercontent.com/u/545499?v=4",
@@ -26,6 +16,16 @@
       "contributions": [
         "code",
         "business"
+      ]
+    },
+    {
+      "login": "schitcrafter",
+      "name": "Emilia Jaser",
+      "avatar_url": "https://avatars.githubusercontent.com/u/58911293?v=4",
+      "profile": "https://github.com/schitcrafter",
+      "contributions": [
+        "tool",
+        "code"
       ]
     },
     {
@@ -48,38 +48,10 @@
       ]
     },
     {
-      "login": "zom5583",
-      "name": "zom5583",
-      "avatar_url": "https://avatars.githubusercontent.com/u/103882767?v=4",
-      "profile": "https://github.com/zom5583",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
       "login": "3thr3n",
       "name": "3thr3n",
       "avatar_url": "https://avatars.githubusercontent.com/u/33932819?v=4",
       "profile": "https://github.com/3thr3n",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
-      "login": "98jan",
-      "name": "Jan",
-      "avatar_url": "https://avatars.githubusercontent.com/u/46779261?v=4",
-      "profile": "https://github.com/98jan",
-      "contributions": [
-        "code",
-        "infra"
-      ]
-    },
-    {
-      "login": "pweimann",
-      "name": "Paul Weimann",
-      "avatar_url": "https://avatars.githubusercontent.com/u/49559453?v=4",
-      "profile": "https://github.com/pweimann",
       "contributions": [
         "code"
       ]
