@@ -33,22 +33,23 @@ jobs:
       - name: Build with Maven
         run: ./mvnw -B verify
 
-      - name: Cache SonarQube packages
-        uses: actions/cache@v5
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
+      # TODO: Uncomment when SonarCloud project is set up
+      # - name: Cache SonarQube packages
+      #   uses: actions/cache@v5
+      #   with:
+      #     path: ~/.sonar/cache
+      #     key: ${{ runner.os }}-sonar
+      #     restore-keys: ${{ runner.os }}-sonar
 
-      - name: SonarQube analysis
-        if: ${{ !startsWith(github.ref, 'refs/heads/dependabot') }}
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          ./mvnw -B sonar:sonar \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.organization=fuggs-app \
-            -Dsonar.projectKey=fuggs-app_zugferd
+      # - name: SonarQube analysis
+      #   if: ${{ !startsWith(github.ref, 'refs/heads/dependabot') }}
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #   run: |
+      #     ./mvnw -B sonar:sonar \
+      #       -Dsonar.host.url=https://sonarcloud.io \
+      #       -Dsonar.organization=fuggs-app \
+      #       -Dsonar.projectKey=fuggs-app_zugferd
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
