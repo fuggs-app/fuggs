@@ -7,6 +7,14 @@ Fuggs ist ein Fork von [Hopps](https://github.com/hopps-app).
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
+## Build Status
+
+| Service | Status |
+|---------|--------|
+| **Main App** | [![Build fuggs-app](https://github.com/fuggs-app/fuggs/actions/workflows/fuggs-app.yml/badge.svg?branch=main)](https://github.com/fuggs-app/fuggs/actions/workflows/fuggs-app.yml) |
+| **ZugFerd Service** | [![Build zugferd-service](https://github.com/fuggs-app/fuggs/actions/workflows/zugferd-service.yml/badge.svg?branch=main)](https://github.com/fuggs-app/fuggs/actions/workflows/zugferd-service.yml) |
+| **Azure Document AI** | [![Build az-document-ai-service](https://github.com/fuggs-app/fuggs/actions/workflows/az-document-ai-service.yml/badge.svg?branch=main)](https://github.com/fuggs-app/fuggs/actions/workflows/az-document-ai-service.yml) |
+
 ## Features
 
 ### Intelligent Document Processing
