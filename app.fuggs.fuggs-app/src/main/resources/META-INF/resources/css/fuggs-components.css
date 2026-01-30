@@ -150,12 +150,12 @@ button.cds-btn {
 }
 
 button.cds-btn-primary {
-  background-color: #9058c5 !important;
+  background-color: #FF521D !important;
   color: white;
 }
 
 button.cds-btn-primary:hover {
-  background-color: #7d4ab5 !important;
+  background-color: #E6491A !important;
 }
 
 button.cds-btn-secondary {
@@ -213,7 +213,7 @@ button.cds-btn[size="sm"] {
 }
 
 .tag-container cds-tag[type="blue"] {
-  background: rgba(144, 88, 197, 0.1);  /* Fuggs purple with 10% opacity */
+  background: rgba(255, 82, 29, 0.1);  /* Fuggs orange with 10% opacity */
   border-color: var(--cds-link-primary);
 }
 

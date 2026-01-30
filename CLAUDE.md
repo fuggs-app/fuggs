@@ -564,7 +564,7 @@ Use [Chart.js v4.4.0](https://www.chartjs.org/) for data visualization:
           labels: ['Rechnungen', 'Quittungen', 'Sonstige'],
           datasets: [{
             data: [14, 7, 3],
-            backgroundColor: ['#9058c5', '#24a148', '#f1c21b'], // Fuggs purple, green, yellow
+            backgroundColor: ['#FF521D', '#24a148', '#f1c21b'], // Fuggs orange, green, yellow
             borderWidth: 0
           }]
         },
@@ -587,10 +587,10 @@ Use [Chart.js v4.4.0](https://www.chartjs.org/) for data visualization:
 ```
 
 **Use Fuggs brand colors:**
-- **Fuggs Purple (Primary)**: `#9058c5` - Main brand color for buttons, links, interactive elements
-- **Fuggs Purple Hover**: `#7d4ab5` - Darker shade for hover states
-- **Fuggs Purple Active**: `#6a3d9f` - Even darker for active/pressed states
-- **Fuggs Purple Light**: `#e6d9f2` - Light purple for backgrounds and accents
+- **Fuggs Orange (Primary)**: `#FF521D` - Main brand color for buttons, links, interactive elements
+- **Fuggs Orange Hover**: `#E6491A` - Darker shade for hover states
+- **Fuggs Orange Active**: `#CC4017` - Even darker for active/pressed states
+- **Fuggs Orange Light**: `#FFE5DC` - Light orange for backgrounds and accents
 - Green 60: `#24a148` - Success/positive states
 - Red 60: `#da1e28` - Error/danger states
 - Yellow 30: `#f1c21b` - Warning states
@@ -600,10 +600,10 @@ The application uses CSS custom properties for theming. Always use these variabl
 
 ```css
 /* Fuggs Brand Colors (defined in fuggs-core.css) */
-var(--fuggs-primary)        /* #9058c5 - Main purple */
-var(--fuggs-primary-hover)  /* #7d4ab5 - Hover state */
-var(--fuggs-primary-active) /* #6a3d9f - Active state */
-var(--fuggs-primary-light)  /* #e6d9f2 - Light purple */
+var(--fuggs-primary)        /* #FF521D - Main orange */
+var(--fuggs-primary-hover)  /* #E6491A - Hover state */
+var(--fuggs-primary-active) /* #CC4017 - Active state */
+var(--fuggs-primary-light)  /* #FFE5DC - Light orange */
 
 /* Carbon Design Tokens (mapped to Fuggs colors) */
 var(--cds-interactive-01)      /* Primary interactive color */
@@ -614,10 +614,10 @@ var(--cds-ui-focus)           /* Focus indicators */
 ```
 
 **Chart.js colors:**
-When creating charts, use the Fuggs purple as the primary color:
+When creating charts, use the Fuggs orange as the primary color:
 
 ```javascript
-backgroundColor: ['#9058c5', '#24a148', '#f1c21b'],  // Purple, Green, Yellow
+backgroundColor: ['#FF521D', '#24a148', '#f1c21b'],  // Orange, Green, Yellow
 ```
 
 ### Custom CSS

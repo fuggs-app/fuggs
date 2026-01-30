@@ -13,8 +13,8 @@
     vertical-align: middle;
   }
   .status-badge.uploaded {
-    background-color: #e8daff;
-    color: #6929c4;
+    background-color: #FFE5DC;
+    color: #CC4017;
   }
   .status-badge.analyzing {
     background-color: #d0e2ff;
@@ -74,7 +74,7 @@
   </div>
 </div>
 {#else}
-<div class="box" style="background: linear-gradient(135deg, #e8daff 0%, #d4bbff 100%); border: 2px solid #8a3ffc; margin-bottom: var(--cds-spacing-05);">
+<div class="box" style="background: linear-gradient(135deg, #FFE5DC 0%, #FFCCB8 100%); border: 2px solid #FF521D; margin-bottom: var(--cds-spacing-05);">
   <div style="display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 0.75rem 1rem;">
     <div style="flex: 1;">
       <h3 style="margin: 0 0 0.25rem 0; font-size: 0.875rem; color: #161616;">💰 Transaktion erstellen</h3>
@@ -144,10 +144,10 @@
 
 {#if document.hasFile && document.documentStatus}
   {#if document.documentStatus.name == 'UPLOADED' || document.documentStatus.name == 'FAILED'}
-  <div class="box" style="background: linear-gradient(135deg, rgba(105, 41, 196, 0.05) 0%, rgba(166, 108, 255, 0.08) 100%); border: 1px solid rgba(105, 41, 196, 0.2);">
+  <div class="box" style="background: linear-gradient(135deg, rgba(255, 82, 29, 0.05) 0%, rgba(255, 82, 29, 0.08) 100%); border: 1px solid rgba(255, 82, 29, 0.2);">
     <div style="display: flex; align-items: center; justify-content: space-between;">
       <div>
-        <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: #6929c4;">KI-Analyse verfügbar</h3>
+        <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: #CC4017;">KI-Analyse verfügbar</h3>
         <p style="margin: 0; font-size: 0.875rem; color: #525252;">Lassen Sie die KI automatisch Daten aus diesem Beleg extrahieren.</p>
       </div>
       <form action="/belege/{document.id}/analyze" method="POST">
@@ -167,7 +167,7 @@
     <input type="hidden" name="id" value="{document.id}">
 
     <div class="form-section">
-      <h3>Belegdaten{#if document.displayExtractionSource} <span style="font-size: 0.75rem; font-weight: normal; color: #6929c4; margin-left: 0.5rem;">(Extrahiert via {document.displayExtractionSource})</span>{/if}</h3>
+      <h3>Belegdaten{#if document.displayExtractionSource} <span style="font-size: 0.75rem; font-weight: normal; color: #CC4017; margin-left: 0.5rem;">(Extrahiert via {document.displayExtractionSource})</span>{/if}</h3>
       <div class="form-row">
         <cds-text-input
           label="Bezeichnung"

@@ -92,8 +92,8 @@
     --cds-layout-size-height: 1.5rem;
   }
   .tags-cell cds-tag[type="purple"] {
-    background: linear-gradient(135deg, rgba(105, 41, 196, 0.15) 0%, rgba(166, 108, 255, 0.2) 100%);
-    border-color: #8a3ffc;
+    background: linear-gradient(135deg, rgba(255, 82, 29, 0.15) 0%, rgba(255, 82, 29, 0.2) 100%);
+    border-color: #FF521D;
   }
   cds-table {
     width: 100%;
@@ -115,10 +115,10 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.125rem 0.5rem;
-    background: linear-gradient(135deg, rgba(105, 41, 196, 0.15) 0%, rgba(166, 108, 255, 0.2) 100%);
+    background: linear-gradient(135deg, rgba(255, 82, 29, 0.15) 0%, rgba(255, 82, 29, 0.2) 100%);
     border-radius: 0.75rem;
     font-size: 0.75rem;
-    color: #6929c4;
+    color: #CC4017;
   }
   .status-badge {
     display: inline-flex;
@@ -131,8 +131,8 @@
     transition: all 0.2s ease;
   }
   .status-badge.uploaded {
-    background-color: #e8daff;
-    color: #6929c4;
+    background-color: #FFE5DC;
+    color: #CC4017;
   }
   .status-badge.analyzing {
     background-color: #d0e2ff;
@@ -179,8 +179,8 @@
     box-shadow: 0 2px 8px rgba(14, 96, 39, 0.2);
   }
   .transaction-status.no-transaction {
-    background: linear-gradient(135deg, rgba(105, 41, 196, 0.15) 0%, rgba(166, 108, 255, 0.2) 100%);
-    color: #6929c4;
+    background: linear-gradient(135deg, rgba(255, 82, 29, 0.15) 0%, rgba(255, 82, 29, 0.2) 100%);
+    color: #CC4017;
   }
   .transaction-status svg {
     width: 12px;
@@ -190,7 +190,7 @@
 
   /* Review Alert Banner */
   .review-alert {
-    background: linear-gradient(135deg, #8a3ffc 0%, #6929c4 100%);
+    background: linear-gradient(135deg, #FF6B3D 0%, #FF521D 100%);
     color: white;
     padding: 1.5rem 2rem;
     border-radius: 8px;
@@ -198,7 +198,7 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    box-shadow: 0 4px 12px rgba(105, 41, 196, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 82, 29, 0.3);
     animation: slideIn 0.3s ease-out;
   }
   @keyframes slideIn {
@@ -256,7 +256,7 @@
   }
   .review-btn {
     background: white;
-    color: #6929c4;
+    color: #CC4017;
     border: none;
     padding: 0.75rem 1.5rem;
     border-radius: 4px;
@@ -283,7 +283,7 @@
 
   /* Make analyzed rows stand out */
   cds-table-row.needs-review {
-    background: linear-gradient(90deg, rgba(105, 41, 196, 0.03) 0%, rgba(166, 108, 255, 0.05) 100%);
+    background: linear-gradient(90deg, rgba(255, 82, 29, 0.03) 0%, rgba(255, 82, 29, 0.05) 100%);
     animation: glow 3s ease-in-out infinite;
   }
   @keyframes glow {

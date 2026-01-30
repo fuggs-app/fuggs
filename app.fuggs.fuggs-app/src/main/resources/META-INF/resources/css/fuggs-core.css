@@ -8,10 +8,10 @@
 /* Carbon Design System Overrides (Gray 10 theme will be loaded via CDN) */
 :root {
   /* Fuggs Brand Colors */
-  --fuggs-primary: #9058c5;           /* Main purple brand color */
-  --fuggs-primary-hover: #7d4ab5;     /* Darker purple for hover states */
-  --fuggs-primary-active: #6a3d9f;    /* Even darker for active states */
-  --fuggs-primary-light: #e6d9f2;     /* Light purple for backgrounds */
+  --fuggs-primary: #FF521D;           /* Main orange brand color */
+  --fuggs-primary-hover: #E6491A;     /* Darker orange for hover states */
+  --fuggs-primary-active: #CC4017;    /* Even darker for active states */
+  --fuggs-primary-light: #FFE5DC;     /* Light orange for backgrounds */
 
   /* Carbon spacing tokens */
   --cds-spacing-03: 0.5rem;
@@ -32,18 +32,18 @@
   --cds-background-active: rgba(141, 141, 141, 0.5);
 
   /* Carbon interactive colors - mapped to Fuggs brand */
-  --cds-interactive-01: #9058c5 !important;      /* Primary interactive color */
+  --cds-interactive-01: #FF521D !important;      /* Primary interactive color */
   --cds-interactive-02: #393939 !important;      /* Secondary interactive (keep gray) */
   --cds-interactive-03: #ffffff !important;      /* Tertiary interactive (keep white) */
-  --cds-interactive-04: #6a3d9f !important;      /* Active state */
-  --cds-border-interactive: #9058c5 !important;  /* Interactive borders */
-  --cds-link-primary: #9058c5 !important;        /* Link color */
-  --cds-link-primary-hover: #7d4ab5 !important;  /* Link hover */
-  --cds-ui-focus: #9058c5 !important;           /* Focus indicators */
-  --cds-button-primary: #9058c5 !important;      /* Primary button background */
-  --cds-button-primary-hover: #7d4ab5 !important; /* Primary button hover */
-  --cds-button-primary-active: #6a3d9f !important; /* Primary button active */
-  --cds-focus: #9058c5 !important;              /* Focus color */
+  --cds-interactive-04: #CC4017 !important;      /* Active state */
+  --cds-border-interactive: #FF521D !important;  /* Interactive borders */
+  --cds-link-primary: #FF521D !important;        /* Link color */
+  --cds-link-primary-hover: #E6491A !important;  /* Link hover */
+  --cds-ui-focus: #FF521D !important;           /* Focus indicators */
+  --cds-button-primary: #FF521D !important;      /* Primary button background */
+  --cds-button-primary-hover: #E6491A !important; /* Primary button hover */
+  --cds-button-primary-active: #CC4017 !important; /* Primary button active */
+  --cds-focus: #FF521D !important;              /* Focus color */
 
   /* Layout */
   --side-nav-width: 256px;

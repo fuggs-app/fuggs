@@ -78,7 +78,9 @@
       "Bash(npx expo install:*)",
       "Bash(npx expo-doctor)",
       "Bash(npx expo run:android)",
-      "Bash(app.fuggs.fuggs-app/mvnw clean verify:*)"
+      "Bash(app.fuggs.fuggs-app/mvnw clean verify:*)",
+      "Bash(../mvnw quarkus:dev:*)",
+      "Bash(./mvnw:*)"
     ]
   }
 }
