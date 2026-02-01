@@ -23,6 +23,18 @@ code in this repository.
 
 # Format code
 ./mvnw formatter:format
+
+# Start Temporal infrastructure
+docker-compose -f app.fuggs.fuggs-app/compose-devservices.yml up -d
+
+# Stop Temporal infrastructure
+docker-compose -f app.fuggs.fuggs-app/compose-devservices.yml down
+
+# View Temporal UI
+open http://localhost:8088
+
+# Verify Temporal search attributes
+docker exec temporal-server tctl --namespace default search-attribute list
 ```
 
 ## Architecture
@@ -205,6 +217,33 @@ downloadFile(key);
 storageService.
 
 deleteFile(key);
+```
+
+## Temporal Workflows
+
+The application uses Temporal for orchestrating long-running workflows.
+
+**Custom Search Attributes:**
+
+For multi-tenancy and workflow tracking, the following custom search attributes are used:
+- `OrganizationId` (Keyword) - Isolates workflows by organization
+- `DocumentId` (Keyword) - Maps workflows to specific documents
+
+These attributes are automatically registered during infrastructure setup via the `temporal-init` container when you start Docker Compose.
+
+**Verify search attributes:**
+```bash
+docker exec temporal-server tctl --namespace default search-attribute list
+```
+
+**Manual registration (rarely needed):**
+
+If search attributes are not registered automatically, you can register them manually:
+
+```bash
+echo "Y" | docker exec -i temporal-server tctl --namespace default admin cluster add-search-attributes \
+  --name OrganizationId --type Keyword \
+  --name DocumentId --type Keyword
 ```
 
 ## Document Analysis Workflow

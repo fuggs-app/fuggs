@@ -80,6 +80,10 @@ public class Document extends PanacheEntity
 	@Column(name = "workflow_instance_id", length = 36)
 	private String workflowInstanceId;
 
+	// Link to Temporal workflow (new workflow engine)
+	@Column(name = "temporal_workflow_id", length = 255)
+	private String temporalWorkflowId;
+
 	// User tracking for multi-user scenarios
 	private String uploadedBy;
 	private String analyzedBy;
@@ -519,6 +523,16 @@ public class Document extends PanacheEntity
 	public void setWorkflowInstanceId(String workflowInstanceId)
 	{
 		this.workflowInstanceId = workflowInstanceId;
+	}
+
+	public String getTemporalWorkflowId()
+	{
+		return temporalWorkflowId;
+	}
+
+	public void setTemporalWorkflowId(String temporalWorkflowId)
+	{
+		this.temporalWorkflowId = temporalWorkflowId;
 	}
 
 	public String getUploadedBy()

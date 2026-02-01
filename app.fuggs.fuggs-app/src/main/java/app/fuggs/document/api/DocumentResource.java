@@ -17,7 +17,6 @@ import app.fuggs.shared.security.OrganizationContext;
 import app.fuggs.shared.util.FlashKeys;
 import app.fuggs.transaction.domain.TransactionRecord;
 import app.fuggs.transaction.repository.TransactionRecordRepository;
-import app.fuggs.workflow.ProcessEngine;
 import io.quarkiverse.renarde.Controller;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
@@ -63,9 +62,6 @@ public class DocumentResource extends Controller
 	TransactionRecordRepository transactionRepository;
 
 	@Inject
-	ProcessEngine processEngine;
-
-	@Inject
 	SecurityIdentity securityIdentity;
 
 	@Inject
@@ -79,6 +75,9 @@ public class DocumentResource extends Controller
 
 	@Inject
 	OrganizationContext organizationContext;
+
+	@Inject
+	app.fuggs.document.temporal.TemporalDocumentService temporalService;
 
 	@CheckedTemplate
 	public static class Templates
@@ -382,40 +381,38 @@ public class DocumentResource extends Controller
 			return;
 		}
 
-		// Build user input map for workflow
-		Map<String, Object> userInput = new java.util.HashMap<>();
-		userInput.put("id", id);
-		userInput.put("confirmed", confirmed);
-		userInput.put("reanalyze", reanalyze);
-		userInput.put("name", name);
-		userInput.put("total", total);
-		userInput.put("totalTax", totalTax);
-		userInput.put("currencyCode", currencyCode);
-		userInput.put("transactionDate", transactionDate);
-		userInput.put("bommelId", bommelId);
-		userInput.put("senderName", senderName);
-		userInput.put("senderStreet", senderStreet);
-		userInput.put("senderZipCode", senderZipCode);
-		userInput.put("senderCity", senderCity);
-		userInput.put("privatelyPaid", privatelyPaid);
-		userInput.put("tags", tags);
+		// Build user input for signal
+		Map<String, Object> formData = new java.util.HashMap<>();
+		formData.put("id", id);
+		formData.put("name", name);
+		formData.put("total", total);
+		formData.put("totalTax", totalTax);
+		formData.put("currencyCode", currencyCode);
+		formData.put("transactionDate", transactionDate);
+		formData.put("bommelId", bommelId);
+		formData.put("senderName", senderName);
+		formData.put("senderStreet", senderStreet);
+		formData.put("senderZipCode", senderZipCode);
+		formData.put("senderCity", senderCity);
+		formData.put("privatelyPaid", privatelyPaid);
+		formData.put("tags", tags);
 
-		// Complete the UserTask in the workflow
-		if (document.getWorkflowInstanceId() != null)
+		app.fuggs.document.temporal.ReviewInput reviewInput = new app.fuggs.document.temporal.ReviewInput(
+			confirmed, reanalyze, formData);
+
+		// Send signal to Temporal workflow
+		if (document.getTemporalWorkflowId() != null)
 		{
 			try
 			{
 				document.setReviewedBy(securityIdentity.getPrincipal().getName());
-				processEngine.completeUserTask(
-					document.getWorkflowInstanceId(),
-					userInput,
-					securityIdentity.getPrincipal().getName());
-				LOG.info("Review completed via workflow: documentId={}, workflowInstanceId={}",
-					id, document.getWorkflowInstanceId());
+				temporalService.completeReview(document.getTemporalWorkflowId(), reviewInput);
+				LOG.info("Review completed via Temporal signal: documentId={}, workflowId={}",
+					id, document.getTemporalWorkflowId());
 			}
 			catch (Exception e)
 			{
-				LOG.error("Failed to complete workflow user task: documentId={}, error={}",
+				LOG.error("Failed to send Temporal signal: documentId={}, error={}",
 					id, e.getMessage(), e);
 				flash(FlashKeys.ERROR, "Fehler beim Abschließen der Prüfung: " + e.getMessage());
 				redirect(DocumentResource.class).review(id);
@@ -424,10 +421,9 @@ public class DocumentResource extends Controller
 		}
 		else
 		{
-			// No workflow - direct save (backward compatibility for manual
-			// entry)
-			LOG.info("No workflow instance found, saving directly: documentId={}", id);
-			applyFormDataDirectly(document, userInput);
+			// Fallback for documents without workflow (manual entry)
+			LOG.info("No workflow found, saving directly: documentId={}", id);
+			applyFormDataDirectly(document, formData);
 			document.setDocumentStatus(DocumentStatus.CONFIRMED);
 		}
 

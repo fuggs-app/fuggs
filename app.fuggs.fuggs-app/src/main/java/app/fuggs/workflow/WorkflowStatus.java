@@ -2,26 +2,12 @@ package app.fuggs.workflow;
 
 /**
  * Status of a workflow instance.
+ *
+ * @deprecated This enum is kept for historical records only. New workflows use
+ *             Temporal workflow engine.
  */
+@Deprecated(since = "2.0.0", forRemoval = true)
 public enum WorkflowStatus
 {
-	/**
-	 * Workflow is actively executing tasks.
-	 */
-	RUNNING,
-
-	/**
-	 * Workflow is waiting for user input on a UserTask.
-	 */
-	WAITING,
-
-	/**
-	 * Workflow has completed all tasks successfully.
-	 */
-	COMPLETED,
-
-	/**
-	 * Workflow execution failed due to an error.
-	 */
-	FAILED
+	RUNNING, WAITING, COMPLETED, FAILED
 }

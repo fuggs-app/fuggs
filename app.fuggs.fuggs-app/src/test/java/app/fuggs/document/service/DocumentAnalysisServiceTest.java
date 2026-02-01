@@ -17,17 +17,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import app.fuggs.document.domain.AnalysisStatus;
 import app.fuggs.document.domain.Document;
-import app.fuggs.document.workflow.DocumentProcessingWorkflow;
-import app.fuggs.workflow.WorkflowInstance;
+import app.fuggs.document.temporal.TemporalDocumentService;
 
 @ExtendWith(MockitoExtension.class)
 class DocumentAnalysisServiceTest
 {
 	@Mock
-	DocumentProcessingWorkflow documentProcessingWorkflow;
-
-	@Mock
-	WorkflowInstance workflowInstance;
+	TemporalDocumentService temporalService;
 
 	@InjectMocks
 	DocumentAnalysisService documentAnalysisService;
@@ -46,18 +42,19 @@ class DocumentAnalysisServiceTest
 	{
 		// Given
 		String analyzedBy = "test-user";
-		String workflowInstanceId = "workflow-123";
-		when(documentProcessingWorkflow.startProcessing(document.getId())).thenReturn(workflowInstance);
-		when(workflowInstance.getId()).thenReturn(workflowInstanceId);
+		String workflowId = "document-123";
+		when(temporalService.startDocumentProcessing(document.getId())).thenReturn(workflowId);
 
 		// When
 		boolean result = documentAnalysisService.triggerAnalysis(document, analyzedBy);
 
 		// Then
 		assertTrue(result);
-		assertEquals(workflowInstanceId, document.getWorkflowInstanceId());
+		assertEquals(workflowId, document.getTemporalWorkflowId());
+		assertEquals(workflowId, document.getWorkflowInstanceId()); // Backward
+																	// compatibility
 		assertEquals(analyzedBy, document.getAnalyzedBy());
-		verify(documentProcessingWorkflow).startProcessing(document.getId());
+		verify(temporalService).startDocumentProcessing(document.getId());
 	}
 
 	@Test
@@ -65,7 +62,7 @@ class DocumentAnalysisServiceTest
 	{
 		// Given
 		String analyzedBy = "test-user";
-		when(documentProcessingWorkflow.startProcessing(document.getId()))
+		when(temporalService.startDocumentProcessing(document.getId()))
 			.thenThrow(new RuntimeException("Workflow error"));
 
 		// When
@@ -73,7 +70,7 @@ class DocumentAnalysisServiceTest
 
 		// Then
 		assertFalse(result);
-		verify(documentProcessingWorkflow).startProcessing(document.getId());
+		verify(temporalService).startDocumentProcessing(document.getId());
 	}
 
 	@Test
@@ -106,8 +103,7 @@ class DocumentAnalysisServiceTest
 	{
 		// Given
 		String analyzedBy = "";
-		when(documentProcessingWorkflow.startProcessing(document.getId())).thenReturn(workflowInstance);
-		when(workflowInstance.getId()).thenReturn("workflow-123");
+		when(temporalService.startDocumentProcessing(document.getId())).thenReturn("document-123");
 
 		// When
 		boolean result = documentAnalysisService.triggerAnalysis(document, analyzedBy);
@@ -134,7 +130,7 @@ class DocumentAnalysisServiceTest
 		// Given
 		String existingWorkflowId = "existing-workflow-123";
 		document.setWorkflowInstanceId(existingWorkflowId);
-		when(documentProcessingWorkflow.startProcessing(document.getId()))
+		when(temporalService.startDocumentProcessing(document.getId()))
 			.thenThrow(new RuntimeException("Service unavailable"));
 
 		// When

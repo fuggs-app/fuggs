@@ -2,8 +2,7 @@ package app.fuggs.document.service;
 
 import app.fuggs.document.domain.AnalysisStatus;
 import app.fuggs.document.domain.Document;
-import app.fuggs.document.workflow.DocumentProcessingWorkflow;
-import app.fuggs.workflow.WorkflowInstance;
+import app.fuggs.document.temporal.TemporalDocumentService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -16,7 +15,7 @@ public class DocumentAnalysisService
 	private static final Logger LOG = getLogger(DocumentAnalysisService.class);
 
 	@Inject
-	DocumentProcessingWorkflow documentProcessingWorkflow;
+	TemporalDocumentService temporalService;
 
 	/**
 	 * Triggers AI document analysis workflow.
@@ -32,15 +31,19 @@ public class DocumentAnalysisService
 	{
 		try
 		{
-			WorkflowInstance instance = documentProcessingWorkflow.startProcessing(document.getId());
-			document.setWorkflowInstanceId(instance.getId());
+			String workflowId = temporalService.startDocumentProcessing(document.getId());
+			document.setTemporalWorkflowId(workflowId);
+			document.setWorkflowInstanceId(workflowId); // Backward
+														// compatibility
 			document.setAnalyzedBy(analyzedBy);
-			LOG.info("Document processing workflow triggered: documentId={}, workflowInstanceId={}", document.getId(), instance.getId());
+			LOG.info("Document processing workflow triggered: documentId={}, workflowId={}",
+				document.getId(), workflowId);
 			return true;
 		}
 		catch (Exception e)
 		{
-			LOG.warn("Document analysis could not be started: documentId={}", document.getId(), e);
+			LOG.warn("Document analysis could not be started: documentId={}",
+				document.getId(), e);
 
 			// Don't fail the upload if analysis fails - it's an enhancement,
 			// not critical

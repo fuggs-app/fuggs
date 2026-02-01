@@ -27,7 +27,12 @@ import jakarta.persistence.Table;
  * <p>
  * Workflow instances are persisted to the database so they survive application
  * restarts. UserTasks can wait for user input across server reboots.
+ *
+ * @deprecated This entity is kept for historical records only. New workflows
+ *             use Temporal workflow engine. This table will be removed in a
+ *             future release after all legacy workflows have completed.
  */
+@Deprecated(since = "2.0.0", forRemoval = true)
 @Entity
 @Table(name = "workflow_instance")
 public class WorkflowInstance extends PanacheEntityBase
