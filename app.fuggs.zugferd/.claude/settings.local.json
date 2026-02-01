@@ -21,7 +21,9 @@
       "Bash(docker:*)",
       "Bash(xargs:*)",
       "Bash(tee:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(pkill:*)",
+      "Bash(./mvnw test-compile:*)"
     ]
   }
 }
