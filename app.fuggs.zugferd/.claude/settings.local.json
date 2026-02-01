@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.the-main-thread.com)",
+      "Bash(./mvnw compile:*)",
+      "WebSearch",
+      "Bash(./mvnw formatter:format:*)",
+      "Bash(./mvnw clean compile:*)",
+      "Bash(./mvnw clean test:*)",
+      "Bash(./mvnw test:*)",
+      "Bash(./mvnw clean package:*)",
+      "Bash(./mvnw clean:*)",
+      "Bash(docker-compose:*)",
+      "Bash(curl:*)",
+      "Bash(nc:*)",
+      "Bash(./mvnw quarkus:dev:*)",
+      "Bash(docker network:*)",
+      "Bash(jq:*)",
+      "Bash(docker ps:*)",
+      "Bash(xargs cat:*)",
+      "Bash(docker:*)",
+      "Bash(xargs:*)",
+      "Bash(tee:*)",
+      "Bash(find:*)"
+    ]
+  }
+}

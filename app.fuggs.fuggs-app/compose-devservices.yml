@@ -1,0 +1,156 @@
+services:
+  temporal-postgresql:
+    image: postgres:17
+    container_name: temporal-postgres
+    environment:
+      POSTGRES_DB: temporal
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+    ports:
+      - "5433:5432"
+    volumes:
+      - temporal-postgres-data:/var/lib/postgresql/data
+    networks:
+      - temporal-network
+
+  temporal-server:
+    image: temporalio/auto-setup:1.24.2
+    container_name: temporal-server
+    depends_on:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      - temporal-postgresql
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=temporal-postgresql
+    ports:
+      - "7233:7233"
+    networks:
+      - temporal-network
+
+  temporal-init:
+    image: temporalio/admin-tools:1.24.2-tctl-1.18.1-cli-0.13.2
+    container_name: temporal-init
+    depends_on:
+      - temporal-server
+    command: >
+      bash -c "
+        echo 'Waiting for Temporal server...';
+        until tctl --address temporal-server:7233 namespace describe default 2>/dev/null; do sleep 2; done;
+        echo 'Registering custom search attributes...';
+        echo 'Y' | tctl --address temporal-server:7233 --namespace default admin cluster add-search-attributes \
+          --name OrganizationId --type Keyword \
+          --name DocumentId --type Keyword 2>/dev/null || echo 'Search attributes already exist';
+        echo 'Search attributes ready';
+      "
+    networks:
+      - temporal-network
+
+  temporal-ui:
+    image: temporalio/ui:2.24.0
+    container_name: temporal-ui
+    depends_on:
+      - temporal-server
+    environment:
+      - TEMPORAL_ADDRESS=temporal-server:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    ports:
+      - "8088:8080"
+    networks:
+      - temporal-network
+
+networks:
+  temporal-network:
+    driver: bridge
+
+volumes:
+  temporal-postgres-data:
