@@ -80,7 +80,6 @@ Current features:
 - `document/` - Document/receipt management with S3 file storage and intelligent extraction
 - `audit/` - Audit logging (domain, repository)
 - `shared/` - Shared utilities
-- `simplepe/` - Process engine
 
 **Microservices:**
 

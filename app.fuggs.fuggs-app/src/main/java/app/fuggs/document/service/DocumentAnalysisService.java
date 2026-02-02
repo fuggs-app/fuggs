@@ -33,8 +33,6 @@ public class DocumentAnalysisService
 		{
 			String workflowId = temporalService.startDocumentProcessing(document.getId());
 			document.setTemporalWorkflowId(workflowId);
-			document.setWorkflowInstanceId(workflowId); // Backward
-														// compatibility
 			document.setAnalyzedBy(analyzedBy);
 			LOG.info("Document processing workflow triggered: documentId={}, workflowId={}",
 				document.getId(), workflowId);

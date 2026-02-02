@@ -76,11 +76,7 @@ public class Document extends PanacheEntity
 	@Enumerated(EnumType.STRING)
 	private DocumentStatus documentStatus;
 
-	// Link to workflow instance for resuming workflow
-	@Column(name = "workflow_instance_id", length = 36)
-	private String workflowInstanceId;
-
-	// Link to Temporal workflow (new workflow engine)
+	// Link to Temporal workflow
 	@Column(name = "temporal_workflow_id", length = 255)
 	private String temporalWorkflowId;
 
@@ -513,16 +509,6 @@ public class Document extends PanacheEntity
 	public void setDocumentStatus(DocumentStatus documentStatus)
 	{
 		this.documentStatus = documentStatus;
-	}
-
-	public String getWorkflowInstanceId()
-	{
-		return workflowInstanceId;
-	}
-
-	public void setWorkflowInstanceId(String workflowInstanceId)
-	{
-		this.workflowInstanceId = workflowInstanceId;
 	}
 
 	public String getTemporalWorkflowId()

@@ -51,8 +51,6 @@ class DocumentAnalysisServiceTest
 		// Then
 		assertTrue(result);
 		assertEquals(workflowId, document.getTemporalWorkflowId());
-		assertEquals(workflowId, document.getWorkflowInstanceId()); // Backward
-																	// compatibility
 		assertEquals(analyzedBy, document.getAnalyzedBy());
 		verify(temporalService).startDocumentProcessing(document.getId());
 	}
@@ -122,24 +120,6 @@ class DocumentAnalysisServiceTest
 		// Then
 		assertEquals(AnalysisStatus.FAILED, document.getAnalysisStatus());
 		assertEquals("", document.getAnalysisError());
-	}
-
-	@Test
-	void shouldPreserveExistingWorkflowInstanceIdWhenTriggerFails()
-	{
-		// Given
-		String existingWorkflowId = "existing-workflow-123";
-		document.setWorkflowInstanceId(existingWorkflowId);
-		when(temporalService.startDocumentProcessing(document.getId()))
-			.thenThrow(new RuntimeException("Service unavailable"));
-
-		// When
-		boolean result = documentAnalysisService.triggerAnalysis(document, "test-user");
-
-		// Then
-		assertFalse(result);
-		// Workflow ID should remain unchanged when trigger fails
-		assertEquals(existingWorkflowId, document.getWorkflowInstanceId());
 	}
 
 	@Test

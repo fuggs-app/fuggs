@@ -67,25 +67,6 @@ public class AuditLogRepository implements PanacheRepositoryBase<AuditLogEntry, 
 	}
 
 	/**
-	 * Finds audit log entries for a workflow instance within the current
-	 * organization.
-	 *
-	 * @param workflowInstanceId
-	 *            The workflow instance ID
-	 * @return List of audit log entries
-	 */
-	public List<AuditLogEntry> findByWorkflowInstanceId(String workflowInstanceId)
-	{
-		Long orgId = organizationContext.getCurrentOrganizationId();
-		if (orgId == null)
-		{
-			return List.of();
-		}
-		return list("entityName = ?1 and entityId = ?2 and organization.id = ?3",
-			"WorkflowInstance", workflowInstanceId, orgId);
-	}
-
-	/**
 	 * Finds an audit log entry by ID, scoped to the current organization. This
 	 * prevents cross-organization access.
 	 *
