@@ -10,101 +10,11 @@ services:
       - "5433:5432"
     volumes:
       - temporal-postgres-data:/var/lib/postgresql/data
-    networks:
-      - temporal-network
 
   temporal-server:
     image: temporalio/auto-setup:1.24.2
     container_name: temporal-server
     depends_on:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       - temporal-postgresql
     environment:
       - DB=postgres12
@@ -114,8 +24,6 @@ services:
       - POSTGRES_SEEDS=temporal-postgresql
     ports:
       - "7233:7233"
-    networks:
-      - temporal-network
 
   temporal-init:
     image: temporalio/admin-tools:1.24.2-tctl-1.18.1-cli-0.13.2
@@ -146,8 +54,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    networks:
-      - temporal-network
 
   temporal-ui:
     image: temporalio/ui:2.24.0
@@ -162,12 +68,6 @@ services:
       - TEMPORAL_CORS_ORIGINS=http://localhost:3000
     ports:
       - "8088:8080"
-    networks:
-      - temporal-network
-
-networks:
-  temporal-network:
-    driver: bridge
 
 volumes:
   temporal-postgres-data:

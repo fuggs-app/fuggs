@@ -24,11 +24,11 @@ code in this repository.
 # Format code
 ./mvnw formatter:format
 
-# Start Temporal infrastructure
-docker-compose -f app.fuggs.fuggs-app/temporal-compose.yml up -d
+# Start Temporal infrastructure (auto-starts with quarkus:dev, or manually)
+docker-compose -f app.fuggs.fuggs-app/compose-devservices.yml up -d
 
 # Stop Temporal infrastructure
-docker-compose -f app.fuggs.fuggs-app/temporal-compose.yml down
+docker-compose -f app.fuggs.fuggs-app/compose-devservices.yml down
 
 # View Temporal UI
 open http://localhost:8088
