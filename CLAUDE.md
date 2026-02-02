@@ -25,10 +25,10 @@ code in this repository.
 ./mvnw formatter:format
 
 # Start Temporal infrastructure
-docker-compose -f app.fuggs.fuggs-app/compose-devservices.yml up -d
+docker-compose -f app.fuggs.fuggs-app/temporal-compose.yml up -d
 
 # Stop Temporal infrastructure
-docker-compose -f app.fuggs.fuggs-app/compose-devservices.yml down
+docker-compose -f app.fuggs.fuggs-app/temporal-compose.yml down
 
 # View Temporal UI
 open http://localhost:8088
