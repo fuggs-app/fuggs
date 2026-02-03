@@ -430,9 +430,9 @@ See the main repository LICENSE file for details.
 ## Links
 
 - **Main App:** http://localhost:8080 (development)
-- **GitHub:** https://github.com/your-org/fuggs
-- **Documentation:** https://github.com/your-org/fuggs/wiki
-- **Issues:** https://github.com/your-org/fuggs/issues
+- **GitHub:** https://github.com/fuggs-app/fuggs
+- **Documentation:** https://github.com/fuggs-app/fuggs/wiki
+- **Issues:** https://github.com/fuggs-app/fuggs/issues
 
 ---
 
