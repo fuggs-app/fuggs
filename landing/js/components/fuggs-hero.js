@@ -9,6 +9,14 @@ class FuggsHero extends HTMLElement {
       <section class="gradient-hero pt-32 pb-20 px-4">
         <div class="container mx-auto">
           <div class="max-w-4xl mx-auto text-center">
+            <!-- Beta Badge -->
+            <div class="inline-flex items-center gap-2 bg-fuggs-orange-light text-fuggs-orange px-4 py-2 rounded-full font-semibold mb-6">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+              </svg>
+              Jetzt in Closed Beta
+            </div>
+
             <!-- Main Headline -->
             <h1 class="text-5xl md:text-6xl font-bold mb-6 text-gray-900">
               Vereinsbuchhaltung. <span class="text-fuggs-orange">Intelligent.</span> Einfach.
@@ -22,11 +30,11 @@ class FuggsHero extends HTMLElement {
 
             <!-- CTA Buttons -->
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <a href="http://localhost:8080" class="btn-primary text-lg px-8 py-4">
+              <a href="#newsletter" class="btn-primary text-lg px-8 py-4">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
-                Jetzt kostenlos starten
+                Für Public Beta anmelden
               </a>
               <a href="#how-it-works" class="btn-secondary text-lg px-8 py-4">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
