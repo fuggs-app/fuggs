@@ -166,32 +166,41 @@ Site footer with links, logo, and copyright.
 - Modern web browser with ES6 module support
 - Local web server (to avoid CORS issues with ES6 modules)
 
-### Running Locally
+### Quick Start
 
-**Option 1: Python (recommended)**
-
-```bash
-cd landing
-python3 -m http.server 8000
-```
-
-Then open: http://localhost:8000
-
-**Option 2: Node.js (using http-server)**
+**Option 1: Dev Script (recommended)**
 
 ```bash
 cd landing
-npx http-server -p 8000
+./dev.sh        # Starts server on port 8001
+./dev.sh 3000   # Custom port
 ```
 
-**Option 3: PHP**
+**Option 2: npm**
 
 ```bash
 cd landing
-php -S localhost:8000
+npm run dev     # Starts server on port 8001
 ```
 
-**Option 4: VS Code Live Server Extension**
+**Option 3: Python**
+
+```bash
+cd landing
+python3 -m http.server 8001
+```
+
+**Option 4: Docker**
+
+```bash
+cd landing
+npm run docker:build   # Build image
+npm run docker:run     # Run on http://localhost:8080
+# Or combined:
+npm run docker:dev
+```
+
+**Option 5: VS Code Live Server Extension**
 
 1. Install "Live Server" extension in VS Code
 2. Right-click `index.html` → "Open with Live Server"
@@ -208,6 +217,39 @@ Custom Elements are widely supported in modern browsers. No polyfills required.
 ## Deployment
 
 This is a static website that can be deployed anywhere:
+
+### Docker (Recommended for Production)
+
+The landing page is automatically built and pushed to GitHub Container Registry on every commit to `main`.
+
+**Pull and run the pre-built image:**
+
+```bash
+docker pull ghcr.io/fuggs-app/fuggs/landing:latest
+docker run -p 8080:80 ghcr.io/fuggs-app/fuggs/landing:latest
+```
+
+Then open: http://localhost:8080
+
+**Build your own image:**
+
+```bash
+cd landing
+docker build -t fuggs-landing .
+docker run -p 8080:80 fuggs-landing
+```
+
+**Docker Compose example:**
+
+```yaml
+version: '3.8'
+services:
+  landing:
+    image: ghcr.io/fuggs-app/fuggs/landing:latest
+    ports:
+      - "80:80"
+    restart: unless-stopped
+```
 
 ### GitHub Pages (Recommended for Open Source)
 

@@ -1,0 +1,25 @@
+{
+  "name": "fuggs-landing",
+  "version": "1.0.0",
+  "description": "Fuggs Landing Page - Modern landing page for the intelligent club accounting software",
+  "scripts": {
+    "dev": "python3 -m http.server 8001 || python -m http.server 8001",
+    "start": "npm run dev",
+    "docker:build": "docker build -t fuggs-landing .",
+    "docker:run": "docker run -p 8080:80 fuggs-landing",
+    "docker:dev": "docker build -t fuggs-landing . && docker run -p 8080:80 fuggs-landing"
+  },
+  "keywords": [
+    "fuggs",
+    "landing-page",
+    "accounting",
+    "open-source"
+  ],
+  "author": "Fuggs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fuggs-app/fuggs.git",
+    "directory": "landing"
+  }
+}

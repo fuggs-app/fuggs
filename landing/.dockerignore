@@ -1,0 +1,16 @@
+# Git
+.git
+.gitignore
+
+# Development
+dev.sh
+package.json
+node_modules
+
+# Documentation (keep README.md for container info)
+# README.md is included intentionally
+
+# Temporary files
+*.log
+*.tmp
+.DS_Store
