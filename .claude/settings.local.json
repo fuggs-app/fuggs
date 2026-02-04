@@ -80,7 +80,8 @@
       "Bash(npx expo run:android)",
       "Bash(app.fuggs.fuggs-app/mvnw clean verify:*)",
       "Bash(../mvnw quarkus:dev:*)",
-      "Bash(./mvnw:*)"
+      "Bash(./mvnw:*)",
+      "Bash(git rebase:*)"
     ]
   }
 }
