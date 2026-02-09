@@ -13,7 +13,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.31.1</quarkus.platform.version>
+        <quarkus.platform.version>3.31.2</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
         <sonar.coverage.jacoco.xmlReportPaths>
@@ -91,13 +91,13 @@
         <dependency>
             <groupId>io.quarkiverse.renarde</groupId>
             <artifactId>quarkus-renarde</artifactId>
-            <version>3.1.4</version>
+            <version>3.1.5</version>
         </dependency>
         <!-- Temporal Workflow Engine -->
         <dependency>
             <groupId>io.quarkiverse.temporal</groupId>
             <artifactId>quarkus-temporal</artifactId>
-            <version>0.2.1</version>
+            <version>0.2.2</version>
         </dependency>
         <!-- Testing -->
         <dependency>
