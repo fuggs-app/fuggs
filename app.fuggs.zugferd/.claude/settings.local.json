@@ -23,7 +23,10 @@
       "Bash(tee:*)",
       "Bash(find:*)",
       "Bash(pkill:*)",
-      "Bash(./mvnw test-compile:*)"
+      "Bash(./mvnw test-compile:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(lsof:*)",
+      "Bash(./mvnw formatter:validate:*)"
     ]
   }
 }

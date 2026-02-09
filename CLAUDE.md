@@ -339,17 +339,23 @@ Form POST endpoints require CSRF tokens. For testing:
 
 ## Frontend
 
-This application uses [Carbon Design System v2](https://carbondesignsystem.com/) with [@carbon/web-components](https://web-components.carbondesignsystem.com/).
+This application uses [Carbon Design System v11.100.0](https://carbondesignsystem.com/) with [@carbon/web-components](https://web-components.carbondesignsystem.com/).
 
 **Important:** Use actual Carbon web components, not custom HTML/CSS mimicking Carbon styles.
 
 ### Carbon Web Components
 
-Carbon components are loaded via CDN in `main.html`:
+Carbon components are loaded via CDN in `main.html` using specific versions for consistency:
+- `@carbon/styles`: 1.99.0
+- `@carbon/web-components`: 2.47.0
 
 ```html
-<script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/v2/latest/button.min.js"></script>
-<script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/v2/latest/text-input.min.js"></script>
+<!-- Carbon Design System v11.100.0 -->
+<link rel="stylesheet" href="https://unpkg.com/@carbon/styles@1.99.0/css/styles.min.css">
+
+<!-- Carbon Web Components v2.47.0 -->
+<script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/v2/v2.47.0/button.min.js"></script>
+<script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/v2/v2.47.0/text-input.min.js"></script>
 <!-- etc. -->
 ```
 

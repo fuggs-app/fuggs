@@ -81,7 +81,9 @@
       "Bash(app.fuggs.fuggs-app/mvnw clean verify:*)",
       "Bash(../mvnw quarkus:dev:*)",
       "Bash(./mvnw:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\n🐛 \\(ci\\): Allow Dependabot to trigger Claude Code Review\n\nFix GitHub Actions workflow failure when Dependabot creates PRs. The\nclaude-code-action requires bots to be explicitly allowed. Added\nallowed_bots parameter with ''dependabot'' to enable automated code\nreview on dependency update PRs.\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)"
     ]
   }
 }
