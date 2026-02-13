@@ -53,11 +53,12 @@ html, body {
   margin: 0;
   padding: 0;
   overflow-x: hidden; /* Prevent horizontal scrolling */
+  background-color: #f4f4f4; /* Match --cds-layer-01 to prevent white flash on reload */
 }
 
 body {
   font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
-  background-color: var(--cds-layer-01);
+  transition: opacity 0.15s ease-out;
 }
 
 /* Carbon UI Shell Layout Adjustments */

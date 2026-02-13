@@ -588,7 +588,11 @@
           url.searchParams.set('sortBy', field);
           url.searchParams.set('sortDir', nextDirection);
 
-          // Navigate immediately
+          // Add subtle loading state to reduce flicker perception
+          document.body.style.opacity = '0.6';
+          document.body.style.pointerEvents = 'none';
+
+          // Navigate
           window.location.href = url.toString();
         }, true); // Use capture phase to run before Carbon's handler
       });
