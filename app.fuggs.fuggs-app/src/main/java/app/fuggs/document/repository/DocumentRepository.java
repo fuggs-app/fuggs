@@ -1,9 +1,11 @@
 package app.fuggs.document.repository;
 
 import java.util.List;
+import java.util.Map;
 
 import app.fuggs.document.domain.Document;
 import app.fuggs.shared.security.OrganizationContext;
+import app.fuggs.shared.util.SortHelper;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -14,6 +16,15 @@ public class DocumentRepository implements PanacheRepository<Document>
 	@Inject
 	OrganizationContext organizationContext;
 
+	// Whitelist of allowed sort fields (field name -> column expression)
+	private static final Map<String, String> ALLOWED_SORT_FIELDS = Map.of(
+		"name", "d.name",
+		"date", "d.transactionTime",
+		"total", "d.total");
+
+	private static final String DEFAULT_SORT_FIELD = "date";
+	private static final String DEFAULT_SORT_DIRECTION = "DESC";
+
 	/**
 	 * Finds all documents for the current organization, ordered by date.
 	 *
@@ -21,14 +32,34 @@ public class DocumentRepository implements PanacheRepository<Document>
 	 */
 	public List<Document> findAllOrderedByDate()
 	{
+		return findAllOrderedByDate(null, null);
+	}
+
+	/**
+	 * Finds all documents for the current organization with custom sorting.
+	 *
+	 * @param sortField
+	 *            The field to sort by (validated against whitelist)
+	 * @param sortDirection
+	 *            The sort direction ("asc" or "desc")
+	 * @return List of documents in the current organization
+	 */
+	public List<Document> findAllOrderedByDate(String sortField, String sortDirection)
+	{
 		Long orgId = organizationContext.getCurrentOrganizationId();
 		if (orgId == null)
 		{
 			return List.of();
 		}
-		return find(
-			"SELECT DISTINCT d FROM Document d LEFT JOIN FETCH d.documentTags WHERE d.organization.id = ?1 ORDER BY d.transactionTime DESC, d.createdAt DESC",
-			orgId).list();
+
+		String orderBy = SortHelper.buildOrderByClause(
+			ALLOWED_SORT_FIELDS, sortField, sortDirection,
+			DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION);
+
+		String query = "SELECT DISTINCT d FROM Document d LEFT JOIN FETCH d.documentTags " +
+			"WHERE d.organization.id = ?1 ORDER BY " + orderBy;
+
+		return find(query, orgId).list();
 	}
 
 	/**
@@ -41,14 +72,37 @@ public class DocumentRepository implements PanacheRepository<Document>
 	 */
 	public List<Document> findByBommelId(Long bommelId)
 	{
+		return findByBommelId(bommelId, null, null);
+	}
+
+	/**
+	 * Finds all documents for a specific bommel within the current organization
+	 * with custom sorting.
+	 *
+	 * @param bommelId
+	 *            The bommel ID
+	 * @param sortField
+	 *            The field to sort by (validated against whitelist)
+	 * @param sortDirection
+	 *            The sort direction ("asc" or "desc")
+	 * @return List of documents for the bommel
+	 */
+	public List<Document> findByBommelId(Long bommelId, String sortField, String sortDirection)
+	{
 		Long orgId = organizationContext.getCurrentOrganizationId();
 		if (orgId == null)
 		{
 			return List.of();
 		}
-		return find(
-			"SELECT DISTINCT d FROM Document d LEFT JOIN FETCH d.documentTags WHERE d.bommel.id = ?1 AND d.organization.id = ?2 ORDER BY d.transactionTime DESC",
-			bommelId, orgId).list();
+
+		String orderBy = SortHelper.buildOrderByClause(
+			ALLOWED_SORT_FIELDS, sortField, sortDirection,
+			DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION);
+
+		String query = "SELECT DISTINCT d FROM Document d LEFT JOIN FETCH d.documentTags " +
+			"WHERE d.bommel.id = ?1 AND d.organization.id = ?2 ORDER BY " + orderBy;
+
+		return find(query, bommelId, orgId).list();
 	}
 
 	/**

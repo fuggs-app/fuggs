@@ -87,7 +87,7 @@ public class DocumentResource extends Controller
 			// static
 		}
 
-		public static native TemplateInstance index(List<Document> documents, List<Document> documentsNeedingReview, List<Document> documentsNeedingTransaction);
+		public static native TemplateInstance index(List<Document> documents, List<Document> documentsNeedingReview, List<Document> documentsNeedingTransaction, String sortBy, String sortDir, Long bommelId);
 
 		public static native TemplateInstance create();
 
@@ -98,16 +98,16 @@ public class DocumentResource extends Controller
 
 	@GET
 	@Path("")
-	public TemplateInstance index(@RestQuery Long bommelId)
+	public TemplateInstance index(@RestQuery Long bommelId, @RestQuery String sortBy, @RestQuery String sortDir)
 	{
 		List<Document> documents;
 		if (bommelId != null)
 		{
-			documents = documentRepository.findByBommelId(bommelId);
+			documents = documentRepository.findByBommelId(bommelId, sortBy, sortDir);
 		}
 		else
 		{
-			documents = documentRepository.findAllOrderedByDate();
+			documents = documentRepository.findAllOrderedByDate(sortBy, sortDir);
 		}
 
 		// Populate transaction counts for each document
@@ -125,7 +125,7 @@ public class DocumentResource extends Controller
 			.filter(d -> d.getTransactionCount() == 0)
 			.toList();
 
-		return Templates.index(documents, documentsNeedingReview, documentsNeedingTransaction);
+		return Templates.index(documents, documentsNeedingReview, documentsNeedingTransaction, sortBy, sortDir, bommelId);
 	}
 
 	@GET
@@ -143,7 +143,7 @@ public class DocumentResource extends Controller
 		if (document == null)
 		{
 			flash(FlashKeys.ERROR, BELEG_NICHT_GEFUNDEN);
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 			return null;
 		}
 		List<Bommel> bommels = bommelRepository.listAll();
@@ -183,7 +183,7 @@ public class DocumentResource extends Controller
 		if (document == null)
 		{
 			flash(FlashKeys.ERROR, BELEG_NICHT_GEFUNDEN);
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 			return null;
 		}
 
@@ -314,7 +314,7 @@ public class DocumentResource extends Controller
 		if (document == null)
 		{
 			flash(FlashKeys.ERROR, BELEG_NICHT_GEFUNDEN);
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 			return;
 		}
 
@@ -377,7 +377,7 @@ public class DocumentResource extends Controller
 		if (document == null)
 		{
 			flash(FlashKeys.ERROR, BELEG_NICHT_GEFUNDEN);
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 			return;
 		}
 
@@ -430,7 +430,7 @@ public class DocumentResource extends Controller
 		if (Boolean.TRUE.equals(confirmed))
 		{
 			flash(FlashKeys.SUCCESS, "Beleg gespeichert");
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 		}
 		else if (Boolean.TRUE.equals(reanalyze))
 		{
@@ -488,7 +488,7 @@ public class DocumentResource extends Controller
 		if (document == null)
 		{
 			flash(FlashKeys.ERROR, BELEG_NICHT_GEFUNDEN);
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 			return;
 		}
 
@@ -570,7 +570,7 @@ public class DocumentResource extends Controller
 		if (document == null)
 		{
 			flash(FlashKeys.ERROR, BELEG_NICHT_GEFUNDEN);
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 			return;
 		}
 
@@ -639,7 +639,7 @@ public class DocumentResource extends Controller
 		if (document == null)
 		{
 			flash(FlashKeys.ERROR, BELEG_NICHT_GEFUNDEN);
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 			return;
 		}
 
@@ -651,7 +651,7 @@ public class DocumentResource extends Controller
 
 		documentRepository.delete(document);
 		flash(FlashKeys.SUCCESS, "Beleg gelöscht");
-		redirect(DocumentResource.class).index(null);
+		redirect(DocumentResource.class).index(null, null, null);
 	}
 
 	@POST
@@ -663,7 +663,7 @@ public class DocumentResource extends Controller
 		if (document == null)
 		{
 			flash(FlashKeys.ERROR, BELEG_NICHT_GEFUNDEN);
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 			return;
 		}
 
@@ -708,7 +708,7 @@ public class DocumentResource extends Controller
 		if (document == null)
 		{
 			flash(FlashKeys.ERROR, BELEG_NICHT_GEFUNDEN);
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 			return;
 		}
 
@@ -783,7 +783,7 @@ public class DocumentResource extends Controller
 		if (document == null)
 		{
 			flash(FlashKeys.ERROR, BELEG_NICHT_GEFUNDEN);
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 			return;
 		}
 
@@ -815,7 +815,7 @@ public class DocumentResource extends Controller
 		if (document == null)
 		{
 			flash(FlashKeys.ERROR, BELEG_NICHT_GEFUNDEN);
-			redirect(DocumentResource.class).index(null);
+			redirect(DocumentResource.class).index(null, null, null);
 			return;
 		}
 

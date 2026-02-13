@@ -65,7 +65,7 @@ public class TransactionResource extends Controller
 			// static
 		}
 
-		public static native TemplateInstance index(List<TransactionRecord> transactions);
+		public static native TemplateInstance index(List<TransactionRecord> transactions, String sortBy, String sortDir, Long bommelId, Long documentId);
 
 		public static native TemplateInstance create(List<Bommel> bommels);
 
@@ -74,23 +74,24 @@ public class TransactionResource extends Controller
 
 	@GET
 	@Path("")
-	public TemplateInstance index(@RestQuery Long bommelId, @RestQuery Long documentId)
+	public TemplateInstance index(@RestQuery Long bommelId, @RestQuery Long documentId,
+		@RestQuery String sortBy, @RestQuery String sortDir)
 	{
 		List<TransactionRecord> transactions;
 		if (documentId != null)
 		{
-			transactions = transactionRepository.findByDocument(documentId);
+			transactions = transactionRepository.findByDocument(documentId, sortBy, sortDir);
 		}
 		else if (bommelId != null)
 		{
-			transactions = transactionRepository.findByBommel(bommelId);
+			transactions = transactionRepository.findByBommel(bommelId, sortBy, sortDir);
 		}
 		else
 		{
-			transactions = transactionRepository.findAllOrderedByDate();
+			transactions = transactionRepository.findAllOrderedByDate(sortBy, sortDir);
 		}
 
-		return Templates.index(transactions);
+		return Templates.index(transactions, sortBy, sortDir, bommelId, documentId);
 	}
 
 	@GET
@@ -122,7 +123,7 @@ public class TransactionResource extends Controller
 		if (currentOrg == null)
 		{
 			flash(FlashKeys.ERROR, "Keine Organisation gefunden");
-			redirect(TransactionResource.class).index(null, null);
+			redirect(TransactionResource.class).index(null, null, null, null);
 			return;
 		}
 
@@ -183,7 +184,7 @@ public class TransactionResource extends Controller
 		if (transaction == null)
 		{
 			flash(FlashKeys.ERROR, "Transaktion nicht gefunden");
-			redirect(TransactionResource.class).index(null, null);
+			redirect(TransactionResource.class).index(null, null, null, null);
 			return null;
 		}
 		List<Bommel> bommels = bommelRepository.listAll();
@@ -210,7 +211,7 @@ public class TransactionResource extends Controller
 		if (transaction == null)
 		{
 			flash(FlashKeys.ERROR, "Transaktion nicht gefunden");
-			redirect(TransactionResource.class).index(null, null);
+			redirect(TransactionResource.class).index(null, null, null, null);
 			return;
 		}
 
@@ -276,14 +277,14 @@ public class TransactionResource extends Controller
 		if (transaction == null)
 		{
 			flash(FlashKeys.ERROR, "Transaktion nicht gefunden");
-			redirect(TransactionResource.class).index(null, null);
+			redirect(TransactionResource.class).index(null, null, null, null);
 			return;
 		}
 
 		transactionRepository.delete(transaction);
 
 		flash(FlashKeys.SUCCESS, "Transaktion gelöscht");
-		redirect(TransactionResource.class).index(null, null);
+		redirect(TransactionResource.class).index(null, null, null, null);
 	}
 
 	private void updateTransactionTags(TransactionRecord transaction, String tagsInput)
