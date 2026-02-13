@@ -443,9 +443,19 @@
             data-sort-field="total">
             Betrag
           </cds-table-header-cell>
-          <cds-table-header-cell>Bommel</cds-table-header-cell>
+          <cds-table-header-cell
+            is-sortable
+            sort-direction="{#if sortBy == 'bommel'}{#if sortDir == 'asc'}ascending{#else}descending{/if}{#else}none{/if}"
+            data-sort-field="bommel">
+            Bommel
+          </cds-table-header-cell>
           <cds-table-header-cell>Tags</cds-table-header-cell>
-          <cds-table-header-cell>Status</cds-table-header-cell>
+          <cds-table-header-cell
+            is-sortable
+            sort-direction="{#if sortBy == 'status'}{#if sortDir == 'asc'}ascending{#else}descending{/if}{#else}none{/if}"
+            data-sort-field="status">
+            Status
+          </cds-table-header-cell>
         </cds-table-header-row>
       </cds-table-head>
       <cds-table-body>

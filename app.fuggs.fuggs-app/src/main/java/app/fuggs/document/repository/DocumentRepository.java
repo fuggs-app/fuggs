@@ -20,7 +20,9 @@ public class DocumentRepository implements PanacheRepository<Document>
 	private static final Map<String, String> ALLOWED_SORT_FIELDS = Map.of(
 		"name", "d.name",
 		"date", "d.transactionTime",
-		"total", "d.total");
+		"total", "d.total",
+		"bommel", "b.title",
+		"status", "d.documentStatus");
 
 	private static final String DEFAULT_SORT_FIELD = "date";
 	private static final String DEFAULT_SORT_DIRECTION = "DESC";
@@ -56,7 +58,9 @@ public class DocumentRepository implements PanacheRepository<Document>
 			ALLOWED_SORT_FIELDS, sortField, sortDirection,
 			DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION);
 
-		String query = "SELECT DISTINCT d FROM Document d LEFT JOIN FETCH d.documentTags " +
+		String query = "SELECT DISTINCT d FROM Document d " +
+			"LEFT JOIN FETCH d.documentTags " +
+			"LEFT JOIN d.bommel b " +
 			"WHERE d.organization.id = ?1 ORDER BY " + orderBy;
 
 		return find(query, orgId).list();
@@ -99,7 +103,9 @@ public class DocumentRepository implements PanacheRepository<Document>
 			ALLOWED_SORT_FIELDS, sortField, sortDirection,
 			DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION);
 
-		String query = "SELECT DISTINCT d FROM Document d LEFT JOIN FETCH d.documentTags " +
+		String query = "SELECT DISTINCT d FROM Document d " +
+			"LEFT JOIN FETCH d.documentTags " +
+			"LEFT JOIN d.bommel b " +
 			"WHERE d.bommel.id = ?1 AND d.organization.id = ?2 ORDER BY " + orderBy;
 
 		return find(query, bommelId, orgId).list();

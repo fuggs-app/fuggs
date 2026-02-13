@@ -136,7 +136,12 @@
             data-sort-field="name">
             Name
           </cds-table-header-cell>
-          <cds-table-header-cell>Beleg</cds-table-header-cell>
+          <cds-table-header-cell
+            is-sortable
+            sort-direction="{#if sortBy == 'document'}{#if sortDir == 'asc'}ascending{#else}descending{/if}{#else}none{/if}"
+            data-sort-field="document">
+            Beleg
+          </cds-table-header-cell>
           <cds-table-header-cell
             is-sortable
             sort-direction="{#if sortBy == 'date' || sortBy == null}{#if sortDir == 'asc'}ascending{#else}descending{/if}{#else}none{/if}"
@@ -149,9 +154,19 @@
             data-sort-field="total">
             Betrag
           </cds-table-header-cell>
-          <cds-table-header-cell>Bommel</cds-table-header-cell>
+          <cds-table-header-cell
+            is-sortable
+            sort-direction="{#if sortBy == 'bommel'}{#if sortDir == 'asc'}ascending{#else}descending{/if}{#else}none{/if}"
+            data-sort-field="bommel">
+            Bommel
+          </cds-table-header-cell>
           <cds-table-header-cell>Tags</cds-table-header-cell>
-          <cds-table-header-cell>Privat</cds-table-header-cell>
+          <cds-table-header-cell
+            is-sortable
+            sort-direction="{#if sortBy == 'private'}{#if sortDir == 'asc'}ascending{#else}descending{/if}{#else}none{/if}"
+            data-sort-field="private">
+            Privat
+          </cds-table-header-cell>
         </cds-table-header-row>
       </cds-table-head>
       <cds-table-body>

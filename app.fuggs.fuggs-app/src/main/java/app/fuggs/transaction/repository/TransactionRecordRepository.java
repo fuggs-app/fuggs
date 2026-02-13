@@ -17,10 +17,13 @@ public class TransactionRecordRepository implements PanacheRepository<Transactio
 	OrganizationContext organizationContext;
 
 	// Whitelist of allowed sort fields (field name -> column expression)
-	private static final Map<String, String> ALLOWED_SORT_FIELDS = Map.of(
-		"name", "t.name",
-		"date", "t.transactionTime",
-		"total", "t.total");
+	private static final Map<String, String> ALLOWED_SORT_FIELDS = Map.ofEntries(
+		Map.entry("name", "t.name"),
+		Map.entry("date", "t.transactionTime"),
+		Map.entry("total", "t.total"),
+		Map.entry("document", "doc.name"),
+		Map.entry("bommel", "b.title"),
+		Map.entry("private", "t.privatelyPaid"));
 
 	private static final String DEFAULT_SORT_FIELD = "date";
 	private static final String DEFAULT_SORT_DIRECTION = "DESC";
@@ -59,6 +62,8 @@ public class TransactionRecordRepository implements PanacheRepository<Transactio
 
 		String query = "SELECT DISTINCT t FROM TransactionRecord t " +
 			"LEFT JOIN FETCH t.transactionTags " +
+			"LEFT JOIN t.document doc " +
+			"LEFT JOIN t.bommel b " +
 			"WHERE t.organization.id = ?1 " +
 			"ORDER BY " + orderBy;
 
@@ -100,6 +105,8 @@ public class TransactionRecordRepository implements PanacheRepository<Transactio
 
 		String query = "SELECT DISTINCT t FROM TransactionRecord t " +
 			"LEFT JOIN FETCH t.transactionTags " +
+			"LEFT JOIN t.document doc " +
+			"LEFT JOIN t.bommel b " +
 			"WHERE t.bommel.id = ?1 AND t.organization.id = ?2 " +
 			"ORDER BY " + orderBy;
 
@@ -160,6 +167,8 @@ public class TransactionRecordRepository implements PanacheRepository<Transactio
 
 		String query = "SELECT DISTINCT t FROM TransactionRecord t " +
 			"LEFT JOIN FETCH t.transactionTags " +
+			"LEFT JOIN t.document doc " +
+			"LEFT JOIN t.bommel b " +
 			"WHERE t.document.id = ?1 AND t.organization.id = ?2 " +
 			"ORDER BY " + orderBy;
 
