@@ -492,6 +492,52 @@ Carbon provides `<cds-ai-label>` for AI-generated content. Use `slot="label-text
 </cds-text-input>
 ```
 
+**Sortable Tables (Server-Side Sorting):**
+
+CRITICAL: Carbon's `is-sortable` attribute is designed for CLIENT-SIDE sorting and will cause race conditions with server-side sorting.
+
+When implementing server-side sorting with table reloads:
+
+```javascript
+function initTableSorting() {
+  const sortableHeaders = document.querySelectorAll('cds-table-header-cell[is-sortable]');
+
+  sortableHeaders.forEach(function(header) {
+    header.addEventListener('click', function(event) {
+      // CRITICAL: Stop Carbon's client-side sort from running
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      const field = this.getAttribute('data-sort-field');
+      const currentDirection = this.getAttribute('sort-direction');
+
+      // Determine next direction
+      let nextDirection;
+      if (currentDirection === 'none' || currentDirection === 'descending') {
+        nextDirection = 'asc';
+      } else {
+        nextDirection = 'desc';
+      }
+
+      // Build URL with sort parameters
+      const url = new URL(window.location);
+      url.searchParams.set('sortBy', field);
+      url.searchParams.set('sortDir', nextDirection);
+
+      // Navigate to server-side sorted view
+      window.location.href = url.toString();
+    }, true); // CRITICAL: Use capture phase to run before Carbon's handler
+  });
+}
+```
+
+**Key points:**
+- Keep `is-sortable` attribute for visual UI (arrows, hover states)
+- Use `event.stopImmediatePropagation()` to prevent Carbon's default behavior
+- Use capture phase (`addEventListener` third param = `true`) to intercept clicks first
+- Set `sort-direction` in template based on URL params to show correct arrow state
+- Never mix client-side and server-side sorting - race conditions will occur
+
 ### Carbon UI Shell (Navigation)
 
 The application uses Carbon UI Shell components for header and side navigation:
