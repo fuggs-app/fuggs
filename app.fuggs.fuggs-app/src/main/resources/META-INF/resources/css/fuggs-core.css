@@ -67,7 +67,7 @@ body {
 .app-container {
   margin-top: 48px; /* Height of cds-header */
   margin-left: 48px; /* Width of collapsed rail side-nav */
-  transition: margin-left 0.11s cubic-bezier(0.2, 0, 1, 0.9);
+  /* No transition - keeps page loads instant */
   width: calc(100vw - 48px); /* Constrain to viewport width minus side-nav */
   overflow-x: hidden;
 }

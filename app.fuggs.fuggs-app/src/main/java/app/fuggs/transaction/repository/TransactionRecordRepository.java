@@ -60,8 +60,8 @@ public class TransactionRecordRepository implements PanacheRepository<Transactio
 			ALLOWED_SORT_FIELDS, sortField, sortDirection,
 			DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION);
 
-		String query = "SELECT DISTINCT t FROM TransactionRecord t " +
-			"LEFT JOIN FETCH t.transactionTags " +
+		// Simple query - let JPA handle tag loading
+		String query = "SELECT t FROM TransactionRecord t " +
 			"LEFT JOIN t.document doc " +
 			"LEFT JOIN t.bommel b " +
 			"WHERE t.organization.id = ?1 " +
@@ -103,8 +103,8 @@ public class TransactionRecordRepository implements PanacheRepository<Transactio
 			ALLOWED_SORT_FIELDS, sortField, sortDirection,
 			DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION);
 
-		String query = "SELECT DISTINCT t FROM TransactionRecord t " +
-			"LEFT JOIN FETCH t.transactionTags " +
+		// Simple query - let JPA handle tag loading
+		String query = "SELECT t FROM TransactionRecord t " +
 			"LEFT JOIN t.document doc " +
 			"LEFT JOIN t.bommel b " +
 			"WHERE t.bommel.id = ?1 AND t.organization.id = ?2 " +
@@ -165,8 +165,8 @@ public class TransactionRecordRepository implements PanacheRepository<Transactio
 			ALLOWED_SORT_FIELDS, sortField, sortDirection,
 			DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION);
 
-		String query = "SELECT DISTINCT t FROM TransactionRecord t " +
-			"LEFT JOIN FETCH t.transactionTags " +
+		// Simple query - let JPA handle tag loading
+		String query = "SELECT t FROM TransactionRecord t " +
 			"LEFT JOIN t.document doc " +
 			"LEFT JOIN t.bommel b " +
 			"WHERE t.document.id = ?1 AND t.organization.id = ?2 " +

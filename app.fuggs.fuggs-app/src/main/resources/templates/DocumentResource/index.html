@@ -567,7 +567,11 @@
       const sortableHeaders = document.querySelectorAll('cds-table-header-cell[is-sortable]');
 
       sortableHeaders.forEach(function(header) {
-        header.addEventListener('click', function() {
+        header.addEventListener('click', function(event) {
+          // Stop Carbon's client-side sort from running
+          event.preventDefault();
+          event.stopImmediatePropagation();
+
           const field = this.getAttribute('data-sort-field');
           const currentDirection = this.getAttribute('sort-direction');
 
@@ -584,12 +588,9 @@
           url.searchParams.set('sortBy', field);
           url.searchParams.set('sortDir', nextDirection);
 
-          // Preserve other query parameters (e.g., bommelId)
-          // They're already in the URL
-
-          // Navigate to sorted view
-          window.location = url.toString();
-        });
+          // Navigate immediately
+          window.location.href = url.toString();
+        }, true); // Use capture phase to run before Carbon's handler
       });
     }
   });

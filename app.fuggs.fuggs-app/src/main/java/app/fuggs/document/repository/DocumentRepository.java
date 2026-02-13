@@ -58,8 +58,8 @@ public class DocumentRepository implements PanacheRepository<Document>
 			ALLOWED_SORT_FIELDS, sortField, sortDirection,
 			DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION);
 
-		String query = "SELECT DISTINCT d FROM Document d " +
-			"LEFT JOIN FETCH d.documentTags " +
+		// Simple query - let JPA handle tag loading
+		String query = "SELECT d FROM Document d " +
 			"LEFT JOIN d.bommel b " +
 			"WHERE d.organization.id = ?1 ORDER BY " + orderBy;
 
@@ -103,8 +103,8 @@ public class DocumentRepository implements PanacheRepository<Document>
 			ALLOWED_SORT_FIELDS, sortField, sortDirection,
 			DEFAULT_SORT_FIELD, DEFAULT_SORT_DIRECTION);
 
-		String query = "SELECT DISTINCT d FROM Document d " +
-			"LEFT JOIN FETCH d.documentTags " +
+		// Simple query - let JPA handle tag loading
+		String query = "SELECT d FROM Document d " +
 			"LEFT JOIN d.bommel b " +
 			"WHERE d.bommel.id = ?1 AND d.organization.id = ?2 ORDER BY " + orderBy;
 
