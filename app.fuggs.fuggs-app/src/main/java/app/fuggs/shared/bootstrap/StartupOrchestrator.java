@@ -56,6 +56,11 @@ public class StartupOrchestrator
 			{
 				dataSeeder.seedDemoData(orgs);
 				LOG.info("Seeded demo data for development mode");
+
+				// Log Temporal UI URL for easy access
+				LOG.info("=".repeat(60));
+				LOG.info("Temporal UI: http://localhost:8088");
+				LOG.info("=".repeat(60));
 			}
 
 			LOG.info("Bootstrap completed successfully");
