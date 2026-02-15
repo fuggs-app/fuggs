@@ -2,6 +2,7 @@ package app.fuggs.member.api;
 
 import app.fuggs.bommel.domain.Bommel;
 import app.fuggs.bommel.repository.BommelRepository;
+import app.fuggs.invitation.repository.InvitationRepository;
 import app.fuggs.member.domain.Member;
 import app.fuggs.member.repository.MemberRepository;
 import app.fuggs.member.service.MemberKeycloakSyncService;
@@ -27,6 +28,9 @@ class MemberResourceTest extends BaseOrganizationTest
 
 	@Inject
 	BommelRepository bommelRepository;
+
+	@Inject
+	InvitationRepository invitationRepository;
 
 	@InjectMock
 	MemberKeycloakSyncService memberKeycloakSyncService;
@@ -221,6 +225,7 @@ class MemberResourceTest extends BaseOrganizationTest
 	void deleteAllData()
 	{
 		bommelRepository.deleteAll();
+		invitationRepository.deleteAll();
 		memberRepository.deleteAll();
 		// Recreate the test security member
 		Organization testOrg = getOrCreateTestOrganization();
