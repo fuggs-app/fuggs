@@ -41,7 +41,12 @@ public class KeycloakAdminService
 		user.setFirstName(firstName);
 		user.setLastName(lastName);
 		user.setEnabled(true);
-		user.setEmailVerified(true);
+		// TODO: Implement proper email verification flow
+		// For now, keeping emailVerified=false for security. Users created via
+		// bootstrap are for dev/test and don't need verification, but
+		// production
+		// users should verify.
+		user.setEmailVerified(false);
 		user.setCredentials(Collections.singletonList(credential));
 
 		Response response = keycloak.realm(realm).users().create(user);

@@ -60,6 +60,13 @@
           <svg slot="title-icon" viewBox="0 0 32 32" width="20" height="20"><path d="M12 4a5 5 0 1 1-5 5 5 5 0 0 1 5-5m0-2a7 7 0 1 0 7 7 7 7 0 0 0-7-7ZM22 30h-2v-5a5 5 0 0 0-5-5H9a5 5 0 0 0-5 5v5H2v-5a7 7 0 0 1 7-7h6a7 7 0 0 1 7 7ZM22 4h10v2H22zM22 9h10v2H22zM22 14h7v2h-7z"/></svg>
         </cds-side-nav-link>
 
+        {#if inject:organizationContext.isAdmin()}
+        <cds-side-nav-link href="/einladungen" {#if inject:vertxRequest.path.startsWith('/einladungen')}active{/if}>
+          Einladungen
+          <svg slot="title-icon" viewBox="0 0 32 32" width="20" height="20"><path d="M21 26H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h13v2H8v16h13Z"/><path d="M20 22a2 2 0 0 1 2-2h4v-4h2v4a2 2 0 0 1-2 2h-4v4h-2Zm2-10h4V8a2 2 0 0 0-2-2h-4V4h4a4 4 0 0 1 4 4v4h-6Z"/><path d="M14 10h4v2h-4zM10 10h2v2h-2zM14 16h4v2h-4zM10 16h2v2h-2z"/></svg>
+        </cds-side-nav-link>
+        {/if}
+
         <cds-side-nav-divider></cds-side-nav-divider>
 
         <cds-side-nav-link href="/belege" {#if inject:vertxRequest.path.startsWith('/belege')}active{/if}>

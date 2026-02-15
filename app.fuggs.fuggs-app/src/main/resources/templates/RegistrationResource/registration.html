@@ -1,0 +1,156 @@
+{#include main.html}
+{#title}Registrierung - Fuggs Buchhaltung{/title}
+
+{#moreStyles}
+<style>
+  .registration-container {
+    max-width: 600px;
+    margin: 4rem auto;
+  }
+  .registration-header {
+    text-align: center;
+    margin-bottom: var(--cds-spacing-07);
+  }
+  .registration-header h1 {
+    margin: 0 0 var(--cds-spacing-03) 0;
+    color: var(--cds-text-primary);
+  }
+  .registration-header p {
+    margin: 0;
+    color: var(--cds-text-secondary);
+    font-size: 1rem;
+  }
+  .form-section {
+    margin-bottom: var(--cds-spacing-07);
+  }
+  .form-actions {
+    display: flex;
+    gap: var(--cds-spacing-05);
+    margin-top: var(--cds-spacing-07);
+  }
+  .info-box {
+    background: linear-gradient(135deg, rgba(255, 82, 29, 0.15) 0%, rgba(255, 82, 29, 0.2) 100%);
+    border-left: 4px solid #FF521D;
+    padding: var(--cds-spacing-05);
+    margin-bottom: var(--cds-spacing-07);
+    border-radius: 4px;
+  }
+  .info-box h3 {
+    margin: 0 0 var(--cds-spacing-03) 0;
+    color: #CC4017;
+    font-size: 1rem;
+  }
+  .info-box p {
+    margin: 0;
+    color: #CC4017;
+    font-size: 0.875rem;
+  }
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: #d0e2ff;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    color: #0043ce;
+    font-weight: 500;
+  }
+</style>
+{/moreStyles}
+
+<div class="registration-container">
+  <div class="registration-header">
+    <h1>Willkommen bei Fuggs!</h1>
+    <p>Erstellen Sie Ihr Benutzerkonto</p>
+  </div>
+
+  <div class="box">
+    <div class="info-box">
+      <h3>{#if isFounder}Organisation gründen{#else}Der Organisation beitreten{/if}</h3>
+      <p>
+        {#if isFounder}
+          Sie wurden eingeladen, eine neue Organisation zu gründen. Als Gründer werden Sie automatisch als <strong>Administrator</strong> eingerichtet.
+        {#else}
+          Sie wurden eingeladen, der Organisation <strong>{invitation.organization.displayName}</strong> beizutreten.
+          <br>Ihre Rolle: <span class="role-badge">{invitation.role.name}</span>
+        {/if}
+      </p>
+    </div>
+
+    <form method="POST" action="{#if isFounder}/registrierung/founder{#else}/registrierung/member{/if}">
+      {#authenticityToken /}
+      <input type="hidden" name="token" value="{token}">
+
+      <div class="form-section">
+        <cds-text-input
+          label="Vorname"
+          name="firstName"
+          placeholder="Max"
+          required>
+        </cds-text-input>
+      </div>
+
+      <div class="form-section">
+        <cds-text-input
+          label="Nachname"
+          name="lastName"
+          placeholder="Mustermann"
+          required>
+        </cds-text-input>
+      </div>
+
+      <div class="form-section">
+        <cds-text-input
+          label="E-Mail-Adresse"
+          name="email"
+          type="email"
+          value="{invitation.email}"
+          placeholder="max@beispiel.de"
+          required>
+          <span slot="helper-text">Diese E-Mail-Adresse wird für die Anmeldung verwendet</span>
+        </cds-text-input>
+      </div>
+
+      <div class="form-section">
+        <cds-text-input
+          label="Passwort"
+          name="password"
+          type="password"
+          placeholder="Mindestens 8 Zeichen"
+          required>
+          <span slot="helper-text">Mindestens 8 Zeichen</span>
+        </cds-text-input>
+      </div>
+
+      {#if isFounder}
+      <div class="form-section">
+        <cds-text-input
+          label="Organisationsname"
+          name="organizationName"
+          placeholder="z.B. Meine Firma GmbH"
+          required>
+          <span slot="helper-text">Der Name Ihrer Organisation</span>
+        </cds-text-input>
+      </div>
+      {/if}
+
+      <div class="form-actions">
+        <button type="submit" class="cds-btn cds-btn-primary" style="flex: 1;">
+          Registrierung abschließen
+          <svg viewBox="0 0 32 32" width="16" height="16" fill="currentColor"><path d="M16 18 6 8l1.4-1.4 8.6 8.6 8.6-8.6L26 8z"/></svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{#if flash:error}
+  <cds-inline-notification
+    kind="error"
+    title="Fehler"
+    subtitle="{flash:error}"
+    style="position: fixed; bottom: 1rem; right: 1rem;">
+  </cds-inline-notification>
+{/if}
+
+{/include}

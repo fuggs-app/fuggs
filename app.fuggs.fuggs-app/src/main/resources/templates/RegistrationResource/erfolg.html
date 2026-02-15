@@ -1,0 +1,96 @@
+{#include main.html}
+{#title}Registrierung erfolgreich - Fuggs Buchhaltung{/title}
+
+{#moreStyles}
+<style>
+  .success-container {
+    max-width: 600px;
+    margin: 4rem auto;
+    text-align: center;
+  }
+  .success-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto var(--cds-spacing-07);
+    background: linear-gradient(135deg, #24a148 0%, #198038 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: scaleIn 0.5s ease-out;
+  }
+  @keyframes scaleIn {
+    from {
+      transform: scale(0);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  .success-icon svg {
+    width: 48px;
+    height: 48px;
+    fill: white;
+  }
+  .success-content h1 {
+    margin: 0 0 var(--cds-spacing-05) 0;
+    color: var(--cds-text-primary);
+  }
+  .success-content p {
+    margin: 0 0 var(--cds-spacing-07) 0;
+    color: var(--cds-text-secondary);
+    font-size: 1rem;
+  }
+  .next-steps {
+    background: #f4f4f4;
+    padding: var(--cds-spacing-07);
+    border-radius: 4px;
+    margin-top: var(--cds-spacing-07);
+    text-align: left;
+  }
+  .next-steps h3 {
+    margin: 0 0 var(--cds-spacing-05) 0;
+    color: var(--cds-text-primary);
+  }
+  .next-steps ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--cds-text-secondary);
+  }
+  .next-steps li {
+    margin-bottom: var(--cds-spacing-03);
+  }
+</style>
+{/moreStyles}
+
+<div class="success-container">
+  <div class="box">
+    <div class="success-icon">
+      <svg viewBox="0 0 32 32"><path d="M13 24l-9-9 1.4-1.4L13 21.2 26.6 7.6 28 9z"/></svg>
+    </div>
+
+    <div class="success-content">
+      <h1>Registrierung erfolgreich!</h1>
+      <p>Ihr Benutzerkonto wurde erfolgreich erstellt. Sie können sich jetzt anmelden und mit der Arbeit beginnen.</p>
+
+      <cds-button href="/login" kind="primary" style="margin-top: var(--cds-spacing-05);">
+        Jetzt anmelden
+        <svg slot="icon" viewBox="0 0 32 32" width="16" height="16" fill="currentColor"><path d="M16 7v9.59l8.29-8.3 1.41 1.41-10 10a1 1 0 0 1-1.41 0l-10-10L5.7 8.29l8.3 8.3V7z"/></svg>
+      </cds-button>
+
+      <div class="next-steps">
+        <h3>Nächste Schritte</h3>
+        <ul>
+          <li>Melden Sie sich mit Ihrer E-Mail-Adresse und Ihrem Passwort an</li>
+          <li>Vervollständigen Sie Ihr Profil</li>
+          <li>Beginnen Sie mit der Verwaltung Ihrer Belege und Transaktionen</li>
+          <li>Laden Sie weitere Teammitglieder ein (falls Administrator)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{/include}

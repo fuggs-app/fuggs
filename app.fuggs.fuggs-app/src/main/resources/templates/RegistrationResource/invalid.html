@@ -1,0 +1,113 @@
+{#include main.html}
+{#title}Ungültige Einladung - Fuggs Buchhaltung{/title}
+
+{#moreStyles}
+<style>
+  .error-container {
+    max-width: 600px;
+    margin: 4rem auto;
+    text-align: center;
+  }
+  .error-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto var(--cds-spacing-07);
+    background: linear-gradient(135deg, #da1e28 0%, #a2191f 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: shake 0.5s ease-out;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
+  }
+  .error-icon svg {
+    width: 48px;
+    height: 48px;
+    fill: white;
+  }
+  .error-content h1 {
+    margin: 0 0 var(--cds-spacing-05) 0;
+    color: var(--cds-text-primary);
+  }
+  .error-content p {
+    margin: 0 0 var(--cds-spacing-07) 0;
+    color: var(--cds-text-secondary);
+    font-size: 1rem;
+  }
+  .error-details {
+    background: #ffd7d9;
+    border-left: 4px solid #da1e28;
+    padding: var(--cds-spacing-05);
+    margin-top: var(--cds-spacing-07);
+    border-radius: 4px;
+    text-align: left;
+  }
+  .error-details h3 {
+    margin: 0 0 var(--cds-spacing-03) 0;
+    color: #a2191f;
+    font-size: 1rem;
+  }
+  .error-details p {
+    margin: 0;
+    color: #a2191f;
+    font-size: 0.875rem;
+  }
+  .help-section {
+    background: #f4f4f4;
+    padding: var(--cds-spacing-07);
+    border-radius: 4px;
+    margin-top: var(--cds-spacing-07);
+    text-align: left;
+  }
+  .help-section h3 {
+    margin: 0 0 var(--cds-spacing-05) 0;
+    color: var(--cds-text-primary);
+  }
+  .help-section ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--cds-text-secondary);
+  }
+  .help-section li {
+    margin-bottom: var(--cds-spacing-03);
+  }
+</style>
+{/moreStyles}
+
+<div class="error-container">
+  <div class="box">
+    <div class="error-icon">
+      <svg viewBox="0 0 32 32"><path d="M16 2a14 14 0 1 0 14 14A14 14 0 0 0 16 2Zm0 26a12 12 0 1 1 12-12 12 12 0 0 1-12 12Z"/><path d="M15 8h2v11h-2zM16 22a1.5 1.5 0 1 0 1.5 1.5A1.5 1.5 0 0 0 16 22Z"/></svg>
+    </div>
+
+    <div class="error-content">
+      <h1>Ungültiger Einladungslink</h1>
+      <p>Der von Ihnen verwendete Einladungslink ist leider nicht gültig.</p>
+
+      <div class="error-details">
+        <h3>Fehlerdetails</h3>
+        <p>{errorMessage}</p>
+      </div>
+
+      <div class="help-section">
+        <h3>Mögliche Gründe</h3>
+        <ul>
+          <li><strong>Einladung abgelaufen:</strong> Einladungen sind 7 Tage gültig</li>
+          <li><strong>Bereits verwendet:</strong> Der Link wurde bereits zur Registrierung verwendet</li>
+          <li><strong>Storniert:</strong> Die Einladung wurde vom Administrator storniert</li>
+          <li><strong>Ungültiger Link:</strong> Der Link ist beschädigt oder unvollständig</li>
+        </ul>
+      </div>
+
+      <p style="margin-top: var(--cds-spacing-07); color: var(--cds-text-primary);">
+        Bitte kontaktieren Sie den Administrator Ihrer Organisation, um eine neue Einladung zu erhalten.
+      </p>
+    </div>
+  </div>
+</div>
+
+{/include}

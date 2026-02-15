@@ -1,0 +1,106 @@
+{#include main.html}
+{#title}Neue Einladung - Fuggs Buchhaltung{/title}
+
+{#moreStyles}
+<style>
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--cds-spacing-05);
+  }
+  .page-header h1 {
+    margin: 0;
+  }
+  .form-container {
+    max-width: 600px;
+  }
+  .form-section {
+    margin-bottom: var(--cds-spacing-07);
+  }
+  .form-actions {
+    display: flex;
+    gap: var(--cds-spacing-05);
+    margin-top: var(--cds-spacing-07);
+  }
+  .info-box {
+    background: #d0e2ff;
+    border-left: 4px solid #0f62fe;
+    padding: var(--cds-spacing-05);
+    margin-bottom: var(--cds-spacing-07);
+    border-radius: 4px;
+  }
+  .info-box h3 {
+    margin: 0 0 var(--cds-spacing-03) 0;
+    color: #0043ce;
+    font-size: 1rem;
+  }
+  .info-box p {
+    margin: 0;
+    color: #0043ce;
+    font-size: 0.875rem;
+  }
+</style>
+{/moreStyles}
+
+<div class="page-header">
+  <h1>Neue Einladung</h1>
+  <cds-button href="/einladungen" kind="secondary">
+    Zurück zur Übersicht
+  </cds-button>
+</div>
+
+<div class="box form-container">
+  <div class="info-box">
+    <h3>Benutzer einladen</h3>
+    <p>Laden Sie neue Mitglieder zu Ihrer Organisation ein. Der Eingeladene erhält eine E-Mail mit einem Registrierungslink, der 7 Tage gültig ist.</p>
+  </div>
+
+  <form method="POST" action="/einladungen">
+    {#authenticityToken /}
+
+    <div class="form-section">
+      <cds-text-input
+        label="E-Mail-Adresse"
+        name="email"
+        type="email"
+        placeholder="z.B. maria@beispiel.de"
+        required>
+        <span slot="helper-text">Die E-Mail-Adresse des neuen Mitglieds</span>
+      </cds-text-input>
+    </div>
+
+    <div class="form-section">
+      <cds-select label="Rolle" name="role" required>
+        <cds-select-item value="">Bitte wählen...</cds-select-item>
+        <cds-select-item value="MEMBER">Mitglied</cds-select-item>
+        <cds-select-item value="ADMIN">Administrator</cds-select-item>
+      </cds-select>
+      <span style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--cds-text-secondary);">
+        <strong>Mitglied:</strong> Kann Belege und Transaktionen verwalten<br>
+        <strong>Administrator:</strong> Zusätzlich: Kann Einladungen versenden und Mitglieder verwalten
+      </span>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="cds-btn cds-btn-primary">
+        Einladung erstellen
+        <svg viewBox="0 0 32 32" width="16" height="16" fill="currentColor"><path d="M21 26H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h13v2H8v16h13Z"/><path d="M20 22a2 2 0 0 1 2-2h4v-4h2v4a2 2 0 0 1-2 2h-4v4h-2Zm2-10h4V8a2 2 0 0 0-2-2h-4V4h4a4 4 0 0 1 4 4v4h-6Z"/></svg>
+      </button>
+      <cds-button href="/einladungen" kind="secondary">
+        Abbrechen
+      </cds-button>
+    </div>
+  </form>
+</div>
+
+{#if flash:error}
+  <cds-inline-notification
+    kind="error"
+    title="Fehler"
+    subtitle="{flash:error}"
+    style="position: fixed; bottom: 1rem; right: 1rem;">
+  </cds-inline-notification>
+{/if}
+
+{/include}

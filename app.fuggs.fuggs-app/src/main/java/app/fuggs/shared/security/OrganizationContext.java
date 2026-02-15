@@ -161,4 +161,15 @@ public class OrganizationContext
 	{
 		return securityIdentity.hasRole(Roles.SUPER_ADMIN);
 	}
+
+	/**
+	 * Checks if the current user is an admin (organization admin or super
+	 * admin).
+	 *
+	 * @return true if the user has the admin or super_admin role
+	 */
+	public boolean isAdmin()
+	{
+		return securityIdentity.hasRole(Roles.ADMIN) || securityIdentity.hasRole(Roles.SUPER_ADMIN);
+	}
 }

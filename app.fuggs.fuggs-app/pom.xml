@@ -87,6 +87,14 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-keycloak-admin-rest-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-mailer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-scheduler</artifactId>
+        </dependency>
         <!-- Quarkiverse -->
         <dependency>
             <groupId>io.quarkiverse.renarde</groupId>

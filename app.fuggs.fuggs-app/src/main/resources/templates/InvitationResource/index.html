@@ -1,0 +1,249 @@
+{#include main.html}
+{#title}Einladungen - Fuggs Buchhaltung{/title}
+
+{#moreStyles}
+<style>
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--cds-spacing-05);
+  }
+  .page-header h1 {
+    margin: 0;
+  }
+  .empty-state {
+    text-align: center;
+    padding: var(--cds-spacing-09);
+    color: var(--cds-text-secondary);
+  }
+  .empty-state svg {
+    width: 64px;
+    height: 64px;
+    margin-bottom: var(--cds-spacing-05);
+    fill: var(--cds-icon-secondary, #525252);
+  }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .status-badge.pending {
+    background-color: #FFE5DC;
+    color: #CC4017;
+  }
+  .status-badge.accepted {
+    background-color: #a7f0ba;
+    color: #0e6027;
+  }
+  .status-badge.expired {
+    background-color: #ffd7d9;
+    color: #a2191f;
+  }
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    background: #d0e2ff;
+    border-radius: 0.75rem;
+    font-size: 0.75rem;
+    color: #0043ce;
+  }
+  .invitation-section {
+    margin-bottom: var(--cds-spacing-07);
+  }
+  .invitation-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: var(--cds-spacing-05);
+    color: var(--cds-text-primary);
+  }
+  cds-table {
+    width: 100%;
+  }
+  cds-table-cell {
+    padding: 0.75rem 1rem !important;
+  }
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .action-btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    height: auto;
+    min-height: 1.75rem;
+    white-space: nowrap;
+  }
+  .action-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+</style>
+{/moreStyles}
+
+<div class="page-header">
+  <h1>Einladungen</h1>
+  <cds-button href="/einladungen/neu" kind="primary">
+    Neue Einladung
+    <svg slot="icon" viewBox="0 0 32 32" width="16" height="16" fill="currentColor"><path d="M17 15V7h-2v8H7v2h8v8h2v-8h8v-2z"/></svg>
+  </cds-button>
+</div>
+
+{#if !pendingInvitations.isEmpty}
+<div class="invitation-section box">
+  <h2>Ausstehend ({pendingInvitations.size()})</h2>
+  <cds-table size="lg">
+    <cds-table-head>
+      <cds-table-header-row>
+        <cds-table-header-cell>E-Mail</cds-table-header-cell>
+        <cds-table-header-cell>Rolle</cds-table-header-cell>
+        <cds-table-header-cell>Eingeladen von</cds-table-header-cell>
+        <cds-table-header-cell>Erstellt am</cds-table-header-cell>
+        <cds-table-header-cell>Läuft ab am</cds-table-header-cell>
+        <cds-table-header-cell>Aktionen</cds-table-header-cell>
+      </cds-table-header-row>
+    </cds-table-head>
+    <cds-table-body>
+      {#for invitation in pendingInvitations}
+      <cds-table-row>
+        <cds-table-cell>{invitation.email}</cds-table-cell>
+        <cds-table-cell>
+          <span class="role-badge">{invitation.role.name}</span>
+        </cds-table-cell>
+        <cds-table-cell>{invitation.invitedBy.displayName}</cds-table-cell>
+        <cds-table-cell>{invitation.displayCreatedAt}</cds-table-cell>
+        <cds-table-cell>{invitation.displayExpiresAt}</cds-table-cell>
+        <cds-table-cell>
+          <div class="action-buttons">
+            <form method="POST" action="/einladungen/resend" style="display: inline;">
+              {#authenticityToken /}
+              <input type="hidden" name="invitationId" value="{invitation.id}">
+              <button type="submit" class="cds-btn cds-btn-secondary action-btn" title="Einladung erneut senden">
+                <svg viewBox="0 0 32 32" width="14" height="14" fill="currentColor">
+                  <path d="M22 12h2v2h-2zM18 12h2v2h-2z"/>
+                  <path d="M26 6v4H6V6h20m0-2H6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/>
+                  <path d="M25 18h-2.76L19 14h-6l-3.24 4H7a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h2v-2h16v2h2a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1Zm-11-2h4l1.62 2H12.4Z"/>
+                  <path d="M11 28h10v2H11z"/>
+                </svg>
+                Erneut senden
+              </button>
+            </form>
+            <form method="POST" action="/einladungen/cancel" style="display: inline;">
+              {#authenticityToken /}
+              <input type="hidden" name="invitationId" value="{invitation.id}">
+              <button type="submit" class="cds-btn cds-btn-danger action-btn" title="Einladung stornieren">
+                <svg viewBox="0 0 32 32" width="14" height="14" fill="currentColor">
+                  <path d="M12 12h2v12h-2zM18 12h2v12h-2z"/>
+                  <path d="M4 6v2h2v20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8h2V6zm4 22V8h16v20zM12 2h8v2h-8z"/>
+                </svg>
+                Stornieren
+              </button>
+            </form>
+          </div>
+        </cds-table-cell>
+      </cds-table-row>
+      {/for}
+    </cds-table-body>
+  </cds-table>
+</div>
+{/if}
+
+{#if !acceptedInvitations.isEmpty}
+<div class="invitation-section box">
+  <h2>Akzeptiert ({acceptedInvitations.size()})</h2>
+  <cds-table size="lg">
+    <cds-table-head>
+      <cds-table-header-row>
+        <cds-table-header-cell>E-Mail</cds-table-header-cell>
+        <cds-table-header-cell>Rolle</cds-table-header-cell>
+        <cds-table-header-cell>Eingeladen von</cds-table-header-cell>
+        <cds-table-header-cell>Akzeptiert am</cds-table-header-cell>
+      </cds-table-header-row>
+    </cds-table-head>
+    <cds-table-body>
+      {#for invitation in acceptedInvitations}
+      <cds-table-row>
+        <cds-table-cell>{invitation.email}</cds-table-cell>
+        <cds-table-cell>
+          <span class="role-badge">{invitation.role.name}</span>
+        </cds-table-cell>
+        <cds-table-cell>{invitation.invitedBy.displayName}</cds-table-cell>
+        <cds-table-cell>{invitation.displayAcceptedAt}</cds-table-cell>
+      </cds-table-row>
+      {/for}
+    </cds-table-body>
+  </cds-table>
+</div>
+{/if}
+
+{#if !expiredInvitations.isEmpty}
+<div class="invitation-section box">
+  <h2>Abgelaufen ({expiredInvitations.size()})</h2>
+  <cds-table size="lg">
+    <cds-table-head>
+      <cds-table-header-row>
+        <cds-table-header-cell>E-Mail</cds-table-header-cell>
+        <cds-table-header-cell>Rolle</cds-table-header-cell>
+        <cds-table-header-cell>Eingeladen von</cds-table-header-cell>
+        <cds-table-header-cell>Abgelaufen am</cds-table-header-cell>
+      </cds-table-header-row>
+    </cds-table-head>
+    <cds-table-body>
+      {#for invitation in expiredInvitations}
+      <cds-table-row>
+        <cds-table-cell>{invitation.email}</cds-table-cell>
+        <cds-table-cell>
+          <span class="role-badge">{invitation.role.name}</span>
+        </cds-table-cell>
+        <cds-table-cell>{invitation.invitedBy.displayName}</cds-table-cell>
+        <cds-table-cell>{invitation.displayExpiresAt}</cds-table-cell>
+      </cds-table-row>
+      {/for}
+    </cds-table-body>
+  </cds-table>
+</div>
+{/if}
+
+{#if pendingInvitations.isEmpty && acceptedInvitations.isEmpty && expiredInvitations.isEmpty}
+<div class="box">
+  <div class="empty-state">
+    <svg viewBox="0 0 32 32"><path d="M21 26H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h13v2H8v16h13Z"/><path d="M20 22a2 2 0 0 1 2-2h4v-4h2v4a2 2 0 0 1-2 2h-4v4h-2Zm2-10h4V8a2 2 0 0 0-2-2h-4V4h4a4 4 0 0 1 4 4v4h-6Z"/><path d="M14 10h4v2h-4zM10 10h2v2h-2zM14 16h4v2h-4zM10 16h2v2h-2z"/></svg>
+    <p>Noch keine Einladungen verschickt.</p>
+    <cds-button href="/einladungen/neu" kind="primary">Erste Einladung erstellen</cds-button>
+  </div>
+</div>
+{/if}
+
+{#if flash:success}
+  <cds-inline-notification
+    kind="success"
+    title="Erfolg"
+    subtitle="{flash:success}"
+    style="position: fixed; bottom: 1rem; right: 1rem;">
+  </cds-inline-notification>
+{/if}
+
+{#if flash:error}
+  <cds-inline-notification
+    kind="error"
+    title="Fehler"
+    subtitle="{flash:error}"
+    style="position: fixed; bottom: 1rem; right: 1rem;">
+  </cds-inline-notification>
+{/if}
+
+{#if flash:warning}
+  <cds-inline-notification
+    kind="warning"
+    title="Warnung"
+    subtitle="{flash:warning}"
+    style="position: fixed; bottom: 1rem; right: 1rem;">
+  </cds-inline-notification>
+{/if}
+
+{/include}

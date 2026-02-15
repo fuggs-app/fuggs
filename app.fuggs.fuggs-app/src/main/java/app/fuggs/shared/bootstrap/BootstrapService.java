@@ -10,10 +10,12 @@ import app.fuggs.organization.repository.OrganizationRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -206,8 +208,8 @@ public class BootstrapService
 			return;
 		}
 
-		// Create Member record
-		createIfNotExisting(config, org);
+		// Create Member record with Keycloak user ID
+		createIfNotExisting(config, org, keycloakUserId);
 	}
 
 	/**
@@ -302,21 +304,27 @@ public class BootstrapService
 	}
 
 	/**
-	 * Creates or links a Member record to a Keycloak user.
+	 * Creates or links a Member record to a Keycloak user. Uses REQUIRES_NEW
+	 * transaction to handle race conditions during concurrent bootstrap.
 	 *
 	 * @param config
 	 *            User configuration
 	 * @param org
 	 *            Organization for this member
+	 * @param keycloakUserId
+	 *            Keycloak user ID
 	 */
-	private void createIfNotExisting(UserConfig config, Organization org)
+	@Transactional(TxType.REQUIRES_NEW)
+	void createIfNotExisting(UserConfig config, Organization org, String keycloakUserId)
 	{
 		Member existingByUsername = memberRepository.findByUsername(config.username());
 		if (existingByUsername != null)
 		{
 			LOG.info("Member {} already exists", existingByUsername.getUserName());
+			return;
 		}
-		else
+
+		try
 		{
 			Member newMember = new Member();
 			newMember.setUserName(config.username);
@@ -324,10 +332,36 @@ public class BootstrapService
 			newMember.setFirstName(config.firstName());
 			newMember.setLastName(config.lastName());
 			newMember.setOrganization(org);
+			newMember.setKeycloakUserId(keycloakUserId);
+
+			// Set invitation tracking fields for bootstrap users
+			newMember.setInviteType("BOOTSTRAP");
+			newMember.setJoinedAt(Instant.now());
+			// invitedByMemberId remains null for bootstrap users
+
 			memberRepository.persist(newMember);
 
-			LOG.info("Created member: {} {} ({}) linked to Keycloak user: {} via username equality", newMember.getFirstName(),
-				newMember.getLastName(), newMember.getEmail(), config.username());
+			LOG.info(
+				"Created member: {} {} ({}) linked to Keycloak user: {} (ID: {}) with inviteType=BOOTSTRAP",
+				newMember.getFirstName(), newMember.getLastName(), newMember.getEmail(), config.username(),
+				keycloakUserId);
+		}
+		catch (Exception e)
+		{
+			// Handle race condition: member might have been created
+			// concurrently
+			// Check if it's a unique constraint violation
+			if (e.getMessage() != null
+				&& (e.getMessage().contains("unique") || e.getMessage().contains("duplicate")))
+			{
+				LOG.info("Member {} was created concurrently, skipping creation", config.username());
+			}
+			else
+			{
+				// Unexpected error, re-throw
+				LOG.error("Failed to create member: {}", config.username(), e);
+				throw e;
+			}
 		}
 	}
 

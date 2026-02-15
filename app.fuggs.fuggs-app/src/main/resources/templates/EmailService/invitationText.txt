@@ -1,0 +1,15 @@
+Willkommen bei Fuggs!
+
+{inviterName} hat Sie eingeladen, der Organisation "{organizationName}" beizutreten.
+
+Ihre Rolle: {roleDisplay}
+
+Um Ihre Registrierung abzuschließen, öffnen Sie bitte den folgenden Link in Ihrem Browser:
+{registrationUrl}
+
+WICHTIG: Diese Einladung ist 7 Tage gültig. Bitte schließen Sie Ihre Registrierung innerhalb dieses Zeitraums ab.
+
+Falls Sie diese Einladung nicht erwartet haben, können Sie diese E-Mail ignorieren.
+
+---
+Diese E-Mail wurde automatisch von Fuggs Buchhaltung versendet.
