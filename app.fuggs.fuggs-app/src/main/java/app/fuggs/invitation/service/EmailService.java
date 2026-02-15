@@ -90,19 +90,17 @@ public class EmailService
 			String textBody = Templates.invitationText(organizationName, inviterName, roleDisplay, registrationUrl)
 				.render();
 
+			// Send email via SMTP
+			mailer.send(Mail.withHtml(toEmail, subject, htmlBody)
+				.setText(textBody)
+				.setFrom(fromName + " <" + fromEmail + ">"));
+			LOG.info("Invitation email sent successfully: toEmail={}", toEmail);
+
+			// Additionally write to file if configured
 			if (writeToFile)
 			{
-				// Dev mode: Write email to HTML file
 				writeEmailToFile(toEmail, subject, htmlBody, textBody);
-				LOG.info("Invitation email written to file: toEmail={}", toEmail);
-			}
-			else
-			{
-				// Production mode: Send via SMTP
-				mailer.send(Mail.withHtml(toEmail, subject, htmlBody)
-					.setText(textBody)
-					.setFrom(fromName + " <" + fromEmail + ">"));
-				LOG.info("Invitation email sent successfully: toEmail={}", toEmail);
+				LOG.info("Invitation email also written to file: toEmail={}", toEmail);
 			}
 		}
 		catch (Exception e)
@@ -115,8 +113,9 @@ public class EmailService
 	}
 
 	/**
-	 * Writes an email to an HTML file in the target directory. Only used in dev
-	 * mode for easier debugging without SMTP setup.
+	 * Writes an email to an HTML file in the target directory. Used in dev mode
+	 * for easier debugging - emails are sent via SMTP and additionally written
+	 * to file.
 	 */
 	private void writeEmailToFile(String toEmail, String subject, String htmlBody, String textBody)
 		throws IOException
