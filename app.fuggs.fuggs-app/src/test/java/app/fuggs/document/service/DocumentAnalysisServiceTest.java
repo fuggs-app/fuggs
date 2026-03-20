@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,13 +16,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import app.fuggs.document.domain.AnalysisStatus;
 import app.fuggs.document.domain.Document;
-import app.fuggs.document.temporal.TemporalDocumentService;
+import app.fuggs.document.flow.DocumentFlowService;
 
 @ExtendWith(MockitoExtension.class)
 class DocumentAnalysisServiceTest
 {
 	@Mock
-	TemporalDocumentService temporalService;
+	DocumentFlowService flowService;
 
 	@InjectMocks
 	DocumentAnalysisService documentAnalysisService;
@@ -42,17 +41,17 @@ class DocumentAnalysisServiceTest
 	{
 		// Given
 		String analyzedBy = "test-user";
-		String workflowId = "document-123";
-		when(temporalService.startDocumentProcessing(document.getId())).thenReturn(workflowId);
+		String flowId = "document-123";
+		when(flowService.startDocumentProcessing(document.getId())).thenReturn(flowId);
 
 		// When
 		boolean result = documentAnalysisService.triggerAnalysis(document, analyzedBy);
 
 		// Then
 		assertTrue(result);
-		assertEquals(workflowId, document.getTemporalWorkflowId());
+		assertEquals(flowId, document.getFlowId());
 		assertEquals(analyzedBy, document.getAnalyzedBy());
-		verify(temporalService).startDocumentProcessing(document.getId());
+		verify(flowService).startDocumentProcessing(document.getId());
 	}
 
 	@Test
@@ -60,15 +59,15 @@ class DocumentAnalysisServiceTest
 	{
 		// Given
 		String analyzedBy = "test-user";
-		when(temporalService.startDocumentProcessing(document.getId()))
-			.thenThrow(new RuntimeException("Workflow error"));
+		when(flowService.startDocumentProcessing(document.getId()))
+			.thenThrow(new RuntimeException("Flow error"));
 
 		// When
 		boolean result = documentAnalysisService.triggerAnalysis(document, analyzedBy);
 
 		// Then
 		assertFalse(result);
-		verify(temporalService).startDocumentProcessing(document.getId());
+		verify(flowService).startDocumentProcessing(document.getId());
 	}
 
 	@Test
@@ -101,7 +100,7 @@ class DocumentAnalysisServiceTest
 	{
 		// Given
 		String analyzedBy = "";
-		when(temporalService.startDocumentProcessing(document.getId())).thenReturn("document-123");
+		when(flowService.startDocumentProcessing(document.getId())).thenReturn("document-123");
 
 		// When
 		boolean result = documentAnalysisService.triggerAnalysis(document, analyzedBy);

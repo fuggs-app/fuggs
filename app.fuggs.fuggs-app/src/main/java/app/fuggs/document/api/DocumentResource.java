@@ -77,7 +77,7 @@ public class DocumentResource extends Controller
 	OrganizationContext organizationContext;
 
 	@Inject
-	app.fuggs.document.temporal.TemporalDocumentService temporalService;
+	app.fuggs.document.flow.DocumentAnalysisActivitiesService activitiesService;
 
 	@CheckedTemplate
 	public static class Templates
@@ -397,35 +397,12 @@ public class DocumentResource extends Controller
 		formData.put("privatelyPaid", privatelyPaid);
 		formData.put("tags", tags);
 
-		app.fuggs.document.temporal.ReviewInput reviewInput = new app.fuggs.document.temporal.ReviewInput(
+		app.fuggs.document.flow.ReviewInput reviewInput = new app.fuggs.document.flow.ReviewInput(
 			confirmed, reanalyze, formData);
 
-		// Send signal to Temporal workflow
-		if (document.getTemporalWorkflowId() != null)
-		{
-			try
-			{
-				document.setReviewedBy(securityIdentity.getPrincipal().getName());
-				temporalService.completeReview(document.getTemporalWorkflowId(), reviewInput);
-				LOG.info("Review completed via Temporal signal: documentId={}, workflowId={}",
-					id, document.getTemporalWorkflowId());
-			}
-			catch (Exception e)
-			{
-				LOG.error("Failed to send Temporal signal: documentId={}, error={}",
-					id, e.getMessage(), e);
-				flash(FlashKeys.ERROR, "Fehler beim Abschließen der Prüfung: " + e.getMessage());
-				redirect(DocumentResource.class).review(id);
-				return;
-			}
-		}
-		else
-		{
-			// Fallback for documents without workflow (manual entry)
-			LOG.info("No workflow found, saving directly: documentId={}", id);
-			applyFormDataDirectly(document, formData);
-			document.setDocumentStatus(DocumentStatus.CONFIRMED);
-		}
+		document.setReviewedBy(securityIdentity.getPrincipal().getName());
+		activitiesService.processReviewResult(id, reviewInput);
+		LOG.info("Review completed: documentId={}", id);
 
 		if (Boolean.TRUE.equals(confirmed))
 		{
@@ -442,25 +419,6 @@ public class DocumentResource extends Controller
 			flash(FlashKeys.INFO, "Beleg zur manuellen Eingabe vorbereitet");
 			redirect(DocumentResource.class).show(id);
 		}
-	}
-
-	private void applyFormDataDirectly(Document document, Map<String, Object> userInput)
-	{
-		dataService.applyFormData(document, userInput);
-
-		// Handle bommel assignment (requires repository access)
-		Long bommelId = (Long)userInput.get("bommelId");
-		if (bommelId != null && bommelId > 0)
-		{
-			Bommel bommel = bommelRepository.findByIdScoped(bommelId);
-			document.setBommel(bommel);
-		}
-		else
-		{
-			document.setBommel(null);
-		}
-
-		updateDocumentTags(document, (String)userInput.get("tags"));
 	}
 
 	/**

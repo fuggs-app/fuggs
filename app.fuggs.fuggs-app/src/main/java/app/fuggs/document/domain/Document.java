@@ -76,9 +76,9 @@ public class Document extends PanacheEntity
 	@Enumerated(EnumType.STRING)
 	private DocumentStatus documentStatus;
 
-	// Link to Temporal workflow
-	@Column(name = "temporal_workflow_id", length = 255)
-	private String temporalWorkflowId;
+	// Link to analysis flow
+	@Column(name = "flow_id", length = 255)
+	private String flowId;
 
 	// User tracking for multi-user scenarios
 	private String uploadedBy;
@@ -511,14 +511,14 @@ public class Document extends PanacheEntity
 		this.documentStatus = documentStatus;
 	}
 
-	public String getTemporalWorkflowId()
+	public String getFlowId()
 	{
-		return temporalWorkflowId;
+		return flowId;
 	}
 
-	public void setTemporalWorkflowId(String temporalWorkflowId)
+	public void setFlowId(String flowId)
 	{
-		this.temporalWorkflowId = temporalWorkflowId;
+		this.flowId = flowId;
 	}
 
 	public String getUploadedBy()

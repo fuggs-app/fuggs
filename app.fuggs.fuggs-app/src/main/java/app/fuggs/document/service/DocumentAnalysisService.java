@@ -2,7 +2,7 @@ package app.fuggs.document.service;
 
 import app.fuggs.document.domain.AnalysisStatus;
 import app.fuggs.document.domain.Document;
-import app.fuggs.document.temporal.TemporalDocumentService;
+import app.fuggs.document.flow.DocumentFlowService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -15,7 +15,7 @@ public class DocumentAnalysisService
 	private static final Logger LOG = getLogger(DocumentAnalysisService.class);
 
 	@Inject
-	TemporalDocumentService temporalService;
+	DocumentFlowService flowService;
 
 	/**
 	 * Triggers AI document analysis workflow.
@@ -31,11 +31,11 @@ public class DocumentAnalysisService
 	{
 		try
 		{
-			String workflowId = temporalService.startDocumentProcessing(document.getId());
-			document.setTemporalWorkflowId(workflowId);
+			String flowId = flowService.startDocumentProcessing(document.getId());
+			document.setFlowId(flowId);
 			document.setAnalyzedBy(analyzedBy);
-			LOG.info("Document processing workflow triggered: documentId={}, workflowId={}",
-				document.getId(), workflowId);
+			LOG.info("Document processing flow triggered: documentId={}, flowId={}",
+				document.getId(), flowId);
 			return true;
 		}
 		catch (Exception e)

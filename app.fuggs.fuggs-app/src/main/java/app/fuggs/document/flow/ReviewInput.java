@@ -1,4 +1,4 @@
-package app.fuggs.document.temporal;
+package app.fuggs.document.flow;
 
 import java.util.Map;
 

@@ -1,4 +1,4 @@
-package app.fuggs.document.temporal;
+package app.fuggs.document.flow;
 
 import java.io.InputStream;
 
@@ -28,9 +28,9 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 @ApplicationScoped
-public class DocumentProcessingActivitiesImpl implements DocumentProcessingActivities
+public class DocumentAnalysisActivitiesService
 {
-	private static final Logger LOG = LoggerFactory.getLogger(DocumentProcessingActivitiesImpl.class);
+	private static final Logger LOG = LoggerFactory.getLogger(DocumentAnalysisActivitiesService.class);
 
 	@Inject
 	DocumentRepository documentRepository;
@@ -59,7 +59,6 @@ public class DocumentProcessingActivitiesImpl implements DocumentProcessingActiv
 	@RestClient
 	DocumentAiClient documentAiClient;
 
-	@Override
 	@Transactional
 	public AnalysisResult analyzeWithZugFerd(Long documentId)
 	{
@@ -134,7 +133,6 @@ public class DocumentProcessingActivitiesImpl implements DocumentProcessingActiv
 		}
 	}
 
-	@Override
 	@Transactional
 	public void analyzeWithDocumentAi(Long documentId)
 	{
@@ -192,7 +190,6 @@ public class DocumentProcessingActivitiesImpl implements DocumentProcessingActiv
 		}
 	}
 
-	@Override
 	@Transactional
 	public void processReviewResult(Long documentId, ReviewInput reviewInput)
 	{
@@ -237,7 +234,7 @@ public class DocumentProcessingActivitiesImpl implements DocumentProcessingActiv
 			// User rejected and wants re-analysis
 			document.setDocumentStatus(DocumentStatus.UPLOADED);
 			document.setAnalysisError(null);
-			document.setTemporalWorkflowId(null); // Clear workflow link
+			document.setFlowId(null); // Clear flow link
 
 			logAuditEvent(document, "ReviewDocument", "Re-analysis requested by user");
 			LOG.info("Re-analysis requested: documentId={}", documentId);
@@ -247,7 +244,7 @@ public class DocumentProcessingActivitiesImpl implements DocumentProcessingActiv
 		{
 			// User rejected and wants manual entry
 			document.setDocumentStatus(DocumentStatus.UPLOADED);
-			document.setTemporalWorkflowId(null); // Clear workflow link
+			document.setFlowId(null); // Clear flow link
 
 			logAuditEvent(document, "ReviewDocument", "Manual entry selected by user");
 			LOG.info("Manual entry selected: documentId={}", documentId);
