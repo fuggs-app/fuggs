@@ -197,6 +197,9 @@ $RECYCLE.BIN/
 *decrypted.env
 age.agekey
 
+# Claude Code personal settings
+.claude/settings.local.json
+
 node_modules
 
 # Maven
