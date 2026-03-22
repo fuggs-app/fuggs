@@ -23,12 +23,13 @@ public class DocumentAnalysisFlow extends Flow
 		return FuncWorkflowBuilder.workflow("document-analysis")
 			.tasks(
 				// Step 1: Try ZugFerd extraction first
+				// Output becomes new context: { documentId, success, source,
+				// errorMessage }
 				function("analyzeZugFerd", activities::analyzeWithZugFerd, Long.class)
-					.inputFrom(".documentId")
-					.exportAs("{ zugferdSuccess: .success }"),
+					.inputFrom(".documentId"),
 
 				// Step 2: If ZugFerd failed, run AI fallback; otherwise end
-				switchWhenOrElse(".zugferdSuccess | not", "analyzeAi", FlowDirectiveEnum.END),
+				switchWhenOrElse(".success | not", "analyzeAi", FlowDirectiveEnum.END),
 
 				// Step 3: AI fallback (only reached when ZugFerd failed)
 				consume("analyzeAi", activities::analyzeWithDocumentAi, Long.class)

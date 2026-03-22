@@ -66,14 +66,14 @@ public class DocumentAnalysisActivitiesService
 		if (!document.hasFile())
 		{
 			LOG.info("Document has no file, skipping ZugFerd: documentId={}", documentId);
-			return new AnalysisResult(false, null, "No file attached");
+			return new AnalysisResult(documentId, false, null, "No file attached");
 		}
 
 		if (!document.isPdf())
 		{
 			LOG.info("Document is not PDF, skipping ZugFerd: documentId={}, contentType={}",
 				documentId, document.getFileContentType());
-			return new AnalysisResult(false, null, "Not a PDF file");
+			return new AnalysisResult(documentId, false, null, "Not a PDF file");
 		}
 
 		document.setAnalysisStatus(AnalysisStatus.ANALYZING);
@@ -85,7 +85,7 @@ public class DocumentAnalysisActivitiesService
 			completeAnalysis(document, data, ExtractionSource.ZUGFERD);
 			logAuditEvent(document, "AnalyzeDocumentZugFerd", "ZugFerd analysis completed successfully");
 			LOG.info("ZugFerd analysis completed: documentId={}", documentId);
-			return new AnalysisResult(true, ExtractionSource.ZUGFERD, null);
+			return new AnalysisResult(documentId, true, ExtractionSource.ZUGFERD, null);
 		}
 		catch (Exception e)
 		{
@@ -94,7 +94,7 @@ public class DocumentAnalysisActivitiesService
 			document.setAnalysisStatus(AnalysisStatus.PENDING);
 			document.setDocumentStatus(DocumentStatus.UPLOADED);
 			logAuditEvent(document, "AnalyzeDocumentZugFerd", "ZugFerd analysis failed: " + e.getMessage());
-			return new AnalysisResult(false, null, e.getMessage());
+			return new AnalysisResult(documentId, false, null, e.getMessage());
 		}
 	}
 
