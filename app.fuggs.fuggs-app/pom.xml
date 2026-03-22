@@ -101,6 +101,12 @@
             <artifactId>quarkus-renarde</artifactId>
             <version>3.1.6</version>
         </dependency>
+        <!-- quarkus-flow: in-process async workflow engine -->
+        <dependency>
+            <groupId>io.quarkiverse.flow</groupId>
+            <artifactId>quarkus-flow</artifactId>
+            <version>0.7.1</version>
+        </dependency>
         <!-- Testing -->
         <dependency>
             <groupId>io.quarkus</groupId>
