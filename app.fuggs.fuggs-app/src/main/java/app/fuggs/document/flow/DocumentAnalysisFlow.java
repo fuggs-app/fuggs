@@ -25,7 +25,7 @@ public class DocumentAnalysisFlow extends Flow
 				// Step 1: Try ZugFerd extraction first
 				function("analyzeZugFerd", activities::analyzeWithZugFerd, Long.class)
 					.inputFrom(".documentId")
-					.outputAs("{ zugferdSuccess: .success }"),
+					.exportAs("{ zugferdSuccess: .success }"),
 
 				// Step 2: If ZugFerd failed, run AI fallback; otherwise end
 				switchWhenOrElse(".zugferdSuccess | not", "analyzeAi", FlowDirectiveEnum.END),
