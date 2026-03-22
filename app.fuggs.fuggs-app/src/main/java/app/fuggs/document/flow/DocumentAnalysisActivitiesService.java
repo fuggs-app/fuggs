@@ -1,6 +1,7 @@
 package app.fuggs.document.flow;
 
 import java.io.InputStream;
+import java.util.function.BiFunction;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
@@ -22,7 +23,6 @@ import app.fuggs.document.repository.DocumentRepository;
 import app.fuggs.document.service.DocumentDataApplier;
 import app.fuggs.document.service.DocumentDataService;
 import app.fuggs.document.service.StorageService;
-import app.fuggs.shared.repository.TagRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -37,9 +37,6 @@ public class DocumentAnalysisActivitiesService
 
 	@Inject
 	BommelRepository bommelRepository;
-
-	@Inject
-	TagRepository tagRepository;
 
 	@Inject
 	StorageService storageService;
@@ -63,25 +60,15 @@ public class DocumentAnalysisActivitiesService
 	public AnalysisResult analyzeWithZugFerd(Long documentId)
 	{
 		LOG.info("Starting ZugFerd analysis: documentId={}", documentId);
-
-		Document document = documentRepository.findById(documentId);
-		if (document == null)
-		{
-			LOG.error("Document not found: id={}", documentId);
-			throw new IllegalStateException("Document not found: " + documentId);
-		}
-
-		// Log audit event
+		Document document = requireDocument(documentId);
 		logAuditEvent(document, "AnalyzeDocumentZugFerd", "Started ZugFerd analysis");
 
-		// Skip if no file
 		if (!document.hasFile())
 		{
 			LOG.info("Document has no file, skipping ZugFerd: documentId={}", documentId);
 			return new AnalysisResult(false, null, "No file attached");
 		}
 
-		// Skip if not PDF
 		if (!document.isPdf())
 		{
 			LOG.info("Document is not PDF, skipping ZugFerd: documentId={}, contentType={}",
@@ -89,46 +76,24 @@ public class DocumentAnalysisActivitiesService
 			return new AnalysisResult(false, null, "Not a PDF file");
 		}
 
-		// Mark as analyzing
 		document.setAnalysisStatus(AnalysisStatus.ANALYZING);
 		document.setDocumentStatus(DocumentStatus.ANALYZING);
 
-		try (InputStream fileStream = storageService.downloadFile(document.getFileKey()))
+		try
 		{
-			LOG.debug("Downloaded file from S3: key={}", document.getFileKey());
-
-			// Call ZugFerd microservice
-			DocumentData data = zugFerdClient.scanDocument(fileStream, documentId);
-
-			if (data == null)
-			{
-				LOG.warn("ZugFerd service returned no data: documentId={}", documentId);
-				throw new RuntimeException("ZugFerd extraction returned no data");
-			}
-
-			// Apply extracted data
-			documentDataApplier.applyDocumentData(document, data, TagSource.AI);
-
-			// Mark as completed
-			document.setAnalysisStatus(AnalysisStatus.COMPLETED);
-			document.setDocumentStatus(DocumentStatus.ANALYZED);
-			document.setExtractionSource(ExtractionSource.ZUGFERD);
-
+			DocumentData data = performScan(document, zugFerdClient::scanDocument);
+			completeAnalysis(document, data, ExtractionSource.ZUGFERD);
 			logAuditEvent(document, "AnalyzeDocumentZugFerd", "ZugFerd analysis completed successfully");
 			LOG.info("ZugFerd analysis completed: documentId={}", documentId);
-
 			return new AnalysisResult(true, ExtractionSource.ZUGFERD, null);
-
 		}
 		catch (Exception e)
 		{
 			LOG.warn("ZugFerd extraction failed: documentId={}, error={}", documentId, e.getMessage());
-			// Reset status for AI fallback
+			// Reset for AI fallback — not a terminal failure
 			document.setAnalysisStatus(AnalysisStatus.PENDING);
-
-			logAuditEvent(document, "AnalyzeDocumentZugFerd",
-				"ZugFerd analysis failed: " + e.getMessage());
-
+			document.setDocumentStatus(DocumentStatus.UPLOADED);
+			logAuditEvent(document, "AnalyzeDocumentZugFerd", "ZugFerd analysis failed: " + e.getMessage());
 			return new AnalysisResult(false, null, e.getMessage());
 		}
 	}
@@ -137,13 +102,7 @@ public class DocumentAnalysisActivitiesService
 	public void analyzeWithDocumentAi(Long documentId)
 	{
 		LOG.info("Starting AI analysis: documentId={}", documentId);
-
-		Document document = documentRepository.findById(documentId);
-		if (document == null)
-		{
-			throw new IllegalStateException("Document not found: " + documentId);
-		}
-
+		Document document = requireDocument(documentId);
 		logAuditEvent(document, "AnalyzeDocumentAi", "Started AI analysis");
 
 		if (!document.hasFile())
@@ -156,37 +115,18 @@ public class DocumentAnalysisActivitiesService
 		document.setAnalysisStatus(AnalysisStatus.ANALYZING);
 		document.setDocumentStatus(DocumentStatus.ANALYZING);
 
-		try (InputStream fileStream = storageService.downloadFile(document.getFileKey()))
+		try
 		{
-			LOG.debug("Downloaded file for AI analysis: key={}", document.getFileKey());
-
-			// Call Document AI microservice
-			DocumentData data = documentAiClient.scanDocument(fileStream, documentId);
-
-			if (data == null)
-			{
-				throw new RuntimeException("Document AI returned no data");
-			}
-
-			// Apply extracted data
-			documentDataApplier.applyDocumentData(document, data, TagSource.AI);
-
-			// Mark as completed
-			document.setAnalysisStatus(AnalysisStatus.COMPLETED);
-			document.setDocumentStatus(DocumentStatus.ANALYZED);
-			document.setExtractionSource(ExtractionSource.AI);
-
+			DocumentData data = performScan(document, documentAiClient::scanDocument);
+			completeAnalysis(document, data, ExtractionSource.AI);
 			logAuditEvent(document, "AnalyzeDocumentAi", "AI analysis completed successfully");
 			LOG.info("AI analysis completed: documentId={}", documentId);
-
 		}
 		catch (Exception e)
 		{
 			LOG.error("AI analysis failed: documentId={}, error={}", documentId, e.getMessage(), e);
 			markAnalysisFailed(document, "KI-Analyse fehlgeschlagen: " + e.getMessage());
-
-			logAuditEvent(document, "AnalyzeDocumentAi",
-				"AI analysis failed: " + e.getMessage());
+			logAuditEvent(document, "AnalyzeDocumentAi", "AI analysis failed: " + e.getMessage());
 		}
 	}
 
@@ -196,59 +136,73 @@ public class DocumentAnalysisActivitiesService
 		LOG.info("Processing review result: documentId={}, confirmed={}, reanalyze={}",
 			documentId, reviewInput.confirmed(), reviewInput.reanalyze());
 
-		Document document = documentRepository.findById(documentId);
-		if (document == null)
-		{
-			throw new IllegalStateException("Document not found: " + documentId);
-		}
+		Document document = requireDocument(documentId);
 
-		if (Boolean.TRUE.equals(reviewInput.confirmed()))
+		if (reviewInput.confirmed())
 		{
-			// User confirmed - apply form data and mark as confirmed
 			documentDataService.applyFormData(document, reviewInput.formData());
 
-			// Handle bommel assignment
 			Long bommelId = (Long)reviewInput.formData().get("bommelId");
-			if (bommelId != null && bommelId > 0)
-			{
-				Bommel bommel = bommelRepository.findById(bommelId);
-				document.setBommel(bommel);
-			}
-			else
-			{
-				document.setBommel(null);
-			}
+			Bommel bommel = (bommelId != null && bommelId > 0) ? bommelRepository.findByIdScoped(bommelId) : null;
+			document.setBommel(bommel);
 
-			// Update tags
-			String tagsInput = (String)reviewInput.formData().get("tags");
-			documentDataService.updateTags(document, tagsInput);
+			documentDataService.updateTags(document, (String)reviewInput.formData().get("tags"));
 
 			document.setDocumentStatus(DocumentStatus.CONFIRMED);
-
 			logAuditEvent(document, "ReviewDocument", "Document confirmed by user");
 			LOG.info("Document confirmed: documentId={}", documentId);
-
-		}
-		else if (Boolean.TRUE.equals(reviewInput.reanalyze()))
-		{
-			// User rejected and wants re-analysis
-			document.setDocumentStatus(DocumentStatus.UPLOADED);
-			document.setAnalysisError(null);
-			document.setFlowId(null); // Clear flow link
-
-			logAuditEvent(document, "ReviewDocument", "Re-analysis requested by user");
-			LOG.info("Re-analysis requested: documentId={}", documentId);
-
 		}
 		else
 		{
-			// User rejected and wants manual entry
 			document.setDocumentStatus(DocumentStatus.UPLOADED);
-			document.setFlowId(null); // Clear flow link
+			document.setFlowId(null);
+			document.setAnalysisError(null);
 
-			logAuditEvent(document, "ReviewDocument", "Manual entry selected by user");
-			LOG.info("Manual entry selected: documentId={}", documentId);
+			if (reviewInput.reanalyze())
+			{
+				logAuditEvent(document, "ReviewDocument", "Re-analysis requested by user");
+				LOG.info("Re-analysis requested: documentId={}", documentId);
+			}
+			else
+			{
+				logAuditEvent(document, "ReviewDocument", "Manual entry selected by user");
+				LOG.info("Manual entry selected: documentId={}", documentId);
+			}
 		}
+	}
+
+	private Document requireDocument(Long documentId)
+	{
+		Document document = documentRepository.findById(documentId);
+		if (document == null)
+		{
+			LOG.error("Document not found: id={}", documentId);
+			throw new IllegalStateException("Document not found: " + documentId);
+		}
+		return document;
+	}
+
+	private DocumentData performScan(Document document,
+		BiFunction<InputStream, Long, DocumentData> scanner) throws Exception
+	{
+		try (InputStream fileStream = storageService.downloadFile(document.getFileKey()))
+		{
+			LOG.debug("Downloaded file from S3: key={}", document.getFileKey());
+			DocumentData data = scanner.apply(fileStream, document.getId());
+			if (data == null)
+			{
+				throw new RuntimeException("Scanner returned no data");
+			}
+			return data;
+		}
+	}
+
+	private void completeAnalysis(Document document, DocumentData data, ExtractionSource source)
+	{
+		documentDataApplier.applyDocumentData(document, data, TagSource.AI);
+		document.setAnalysisStatus(AnalysisStatus.COMPLETED);
+		document.setDocumentStatus(DocumentStatus.ANALYZED);
+		document.setExtractionSource(source);
 	}
 
 	private void markAnalysisFailed(Document document, String errorMessage)

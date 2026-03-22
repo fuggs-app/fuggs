@@ -3,8 +3,8 @@ package app.fuggs.document.flow;
 import java.util.Map;
 
 public record ReviewInput(
-	Boolean confirmed,
-	Boolean reanalyze,
+	boolean confirmed,
+	boolean reanalyze,
 	Map<String, Object> formData)
 {
 }
