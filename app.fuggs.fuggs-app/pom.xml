@@ -142,13 +142,13 @@
         <dependency>
             <groupId>io.quarkiverse.wiremock</groupId>
             <artifactId>quarkus-wiremock</artifactId>
-            <version>1.5.3</version>
+            <version>1.6.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.quarkiverse.wiremock</groupId>
             <artifactId>quarkus-wiremock-test</artifactId>
-            <version>1.5.3</version>
+            <version>1.6.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
