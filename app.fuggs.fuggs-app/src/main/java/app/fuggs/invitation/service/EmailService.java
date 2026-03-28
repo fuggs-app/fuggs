@@ -80,14 +80,15 @@ public class EmailService
 
 		String registrationUrl = baseUrl + "/registrierung?token=" + token;
 		String roleDisplay = role.equals("ADMIN") ? "Administrator" : "Mitglied";
-		String subject = "Einladung zu " + organizationName;
+		String displayOrgName = organizationName != null ? organizationName : "Fuggs Buchhaltung";
+		String subject = "Einladung zu " + displayOrgName;
 
 		try
 		{
 			// Render HTML and text templates
-			String htmlBody = Templates.invitationHtml(organizationName, inviterName, roleDisplay, registrationUrl)
+			String htmlBody = Templates.invitationHtml(displayOrgName, inviterName, roleDisplay, registrationUrl)
 				.render();
-			String textBody = Templates.invitationText(organizationName, inviterName, roleDisplay, registrationUrl)
+			String textBody = Templates.invitationText(displayOrgName, inviterName, roleDisplay, registrationUrl)
 				.render();
 
 			// Send email via SMTP

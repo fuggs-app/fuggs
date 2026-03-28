@@ -28,12 +28,18 @@ public class KeycloakAdminService
 	String realm;
 
 	public String createUser(String username, String email, String firstName,
-		String lastName, List<String> roles)
+		String lastName, List<String> roles, String password)
+	{
+		return createUser(username, email, firstName, lastName, roles, password, false);
+	}
+
+	public String createUser(String username, String email, String firstName,
+		String lastName, List<String> roles, String password, boolean temporary)
 	{
 		CredentialRepresentation credential = new CredentialRepresentation();
 		credential.setType(CredentialRepresentation.PASSWORD);
-		credential.setValue("password"); // Default password
-		credential.setTemporary(false);
+		credential.setValue(password);
+		credential.setTemporary(temporary);
 
 		UserRepresentation user = new UserRepresentation();
 		user.setUsername(username);
@@ -41,12 +47,7 @@ public class KeycloakAdminService
 		user.setFirstName(firstName);
 		user.setLastName(lastName);
 		user.setEnabled(true);
-		// TODO: Implement proper email verification flow
-		// For now, keeping emailVerified=false for security. Users created via
-		// bootstrap are for dev/test and don't need verification, but
-		// production
-		// users should verify.
-		user.setEmailVerified(false);
+		user.setEmailVerified(true);
 		user.setCredentials(Collections.singletonList(credential));
 
 		Response response = keycloak.realm(realm).users().create(user);

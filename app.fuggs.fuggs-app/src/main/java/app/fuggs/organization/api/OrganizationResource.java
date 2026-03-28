@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import app.fuggs.dashboard.api.DashboardResource;
 import app.fuggs.organization.domain.Organization;
 import app.fuggs.organization.repository.OrganizationRepository;
+import app.fuggs.shared.bootstrap.BootstrapService;
 import app.fuggs.shared.security.OrganizationContext;
 import io.quarkiverse.renarde.Controller;
 import io.quarkus.qute.CheckedTemplate;
@@ -39,6 +40,9 @@ public class OrganizationResource extends Controller
 
 	@Inject
 	OrganizationContext organizationContext;
+
+	@Inject
+	BootstrapService bootstrapService;
 
 	@CheckedTemplate
 	public static class Templates
@@ -107,6 +111,7 @@ public class OrganizationResource extends Controller
 		organization.setActive(true);
 
 		organizationRepository.persist(organization);
+		bootstrapService.ensureRootBommel(organization);
 
 		LOG.info("Organization created: {} ({})", organization.getName(), organization.getSlug());
 		flash(FlashKeys.SUCCESS, "Organisation erfolgreich erstellt");

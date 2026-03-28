@@ -110,7 +110,7 @@ class KeycloakAdminServiceTest
 		when(roleMappingResource.realmLevel()).thenReturn(roleScopeResource);
 
 		// When
-		String userId = service.createUser(username, email, firstName, lastName, roles);
+		String userId = service.createUser(username, email, firstName, lastName, roles, "test-password");
 
 		// Then
 		assertEquals("user-123", userId);
@@ -128,7 +128,7 @@ class KeycloakAdminServiceTest
 
 		// When/Then
 		assertThrows(RuntimeException.class, () -> {
-			service.createUser("john.doe", "john@example.com", "John", "Doe", List.of("user"));
+			service.createUser("john.doe", "john@example.com", "John", "Doe", List.of("user"), "test-password");
 		});
 	}
 
@@ -142,7 +142,7 @@ class KeycloakAdminServiceTest
 			.thenReturn("https://keycloak.example.com/users/user-456");
 
 		// When
-		String userId = service.createUser("jane.doe", "jane@example.com", "Jane", "Doe", List.of());
+		String userId = service.createUser("jane.doe", "jane@example.com", "Jane", "Doe", List.of(), "test-password");
 
 		// Then
 		assertEquals("user-456", userId);
@@ -162,7 +162,7 @@ class KeycloakAdminServiceTest
 			.thenReturn("https://keycloak.example.com/users/user-789");
 
 		// When
-		String userId = service.createUser("bob.smith", "bob@example.com", "Bob", "Smith", null);
+		String userId = service.createUser("bob.smith", "bob@example.com", "Bob", "Smith", null, "test-password");
 
 		// Then
 		assertEquals("user-789", userId);
@@ -181,7 +181,7 @@ class KeycloakAdminServiceTest
 			.thenReturn("https://keycloak.example.com/admin/realms/test-realm/users/abc-123-def-456");
 
 		// When
-		String userId = service.createUser("test", "test@example.com", "Test", "User", List.of());
+		String userId = service.createUser("test", "test@example.com", "Test", "User", List.of(), "test-password");
 
 		// Then
 		assertEquals("abc-123-def-456", userId);
@@ -209,7 +209,7 @@ class KeycloakAdminServiceTest
 		when(roleMappingResource.realmLevel()).thenReturn(roleScopeResource);
 
 		// When
-		service.createUser("test", "test@example.com", "Test", "User", List.of("new-role"));
+		service.createUser("test", "test@example.com", "Test", "User", List.of("new-role"), "test-password");
 
 		// Then
 		// Verify role was created
@@ -262,7 +262,7 @@ class KeycloakAdminServiceTest
 		when(roleMappingResource.realmLevel()).thenReturn(roleScopeResource);
 
 		// When
-		String userId = service.createUser("multi", "multi@example.com", "Multi", "Role", roles);
+		String userId = service.createUser("multi", "multi@example.com", "Multi", "Role", roles, "test-password");
 
 		// Then
 		assertEquals("user-multi-role", userId);
