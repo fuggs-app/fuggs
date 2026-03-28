@@ -33,7 +33,8 @@ public class InvitationService
 	EmailService emailService;
 
 	/**
-	 * Creates a new invitation with a unique token.
+	 * Creates a new invitation with a unique token for an existing
+	 * organization.
 	 *
 	 * @param email
 	 *            The invitee's email address
@@ -51,10 +52,45 @@ public class InvitationService
 		LOG.info("Creating invitation: email={}, role={}, organizationId={}, invitedBy={}", email, role,
 			organization.id, invitedBy.getDisplayName());
 
-		// Generate unique token
+		Invitation invitation = buildInvitation(email, role, organization, invitedBy);
+		invitationRepository.persist(invitation);
+
+		LOG.info("Invitation created: id={}, token={}, email={}", invitation.id, invitation.getToken(), email);
+
+		sendEmailQuietly(invitation, organization.getDisplayName(), invitedBy.getDisplayName());
+
+		return invitation;
+	}
+
+	/**
+	 * Creates a founder invitation with no pre-assigned organization. The
+	 * invitee will create their own organization during registration.
+	 *
+	 * @param email
+	 *            The invitee's email address
+	 * @param invitedBy
+	 *            The super-admin member creating the invitation
+	 * @return The created invitation
+	 */
+	@Transactional
+	public Invitation createFounderInvitation(String email, Member invitedBy)
+	{
+		LOG.info("Creating founder invitation: email={}, invitedBy={}", email, invitedBy.getDisplayName());
+
+		Invitation invitation = buildInvitation(email, InvitationRole.ADMIN, null, invitedBy);
+		invitationRepository.persist(invitation);
+
+		LOG.info("Founder invitation created: id={}, token={}, email={}", invitation.id, invitation.getToken(), email);
+
+		sendEmailQuietly(invitation, null, invitedBy.getDisplayName());
+
+		return invitation;
+	}
+
+	private Invitation buildInvitation(String email, InvitationRole role, Organization organization, Member invitedBy)
+	{
 		String token = UUID.randomUUID().toString();
 
-		// Create invitation
 		Invitation invitation = new Invitation();
 		invitation.setEmail(email);
 		invitation.setToken(token);
@@ -64,25 +100,23 @@ public class InvitationService
 		invitation.setInvitedBy(invitedBy);
 		invitation.setExpiresAt(Instant.now().plus(EXPIRATION_DAYS, ChronoUnit.DAYS));
 
-		invitationRepository.persist(invitation);
+		return invitation;
+	}
 
-		LOG.info("Invitation created: id={}, token={}, email={}", invitation.id, token, email);
-
-		// Send invitation email
+	private void sendEmailQuietly(Invitation invitation, String organizationName, String inviterName)
+	{
 		try
 		{
-			emailService.sendInvitationEmail(email, token, organization.getDisplayName(), invitedBy.getDisplayName(),
-				role.name());
-			LOG.info("Invitation email sent: id={}, email={}", invitation.id, email);
+			emailService.sendInvitationEmail(invitation.getEmail(), invitation.getToken(), organizationName,
+				inviterName, invitation.getRole().name());
+			LOG.info("Invitation email sent: id={}, email={}", invitation.id, invitation.getEmail());
 		}
 		catch (Exception e)
 		{
-			LOG.error("Failed to send invitation email: id={}, email={}, error={}", invitation.id, email,
-				e.getMessage(), e);
+			LOG.error("Failed to send invitation email: id={}, email={}, error={}", invitation.id,
+				invitation.getEmail(), e.getMessage(), e);
 			// Continue - invitation is still created even if email fails
 		}
-
-		return invitation;
 	}
 
 	/**
@@ -208,8 +242,11 @@ public class InvitationService
 		// Send invitation email
 		try
 		{
+			String organizationName = invitation.getOrganization() != null
+				? invitation.getOrganization().getDisplayName()
+				: null;
 			emailService.sendInvitationEmail(invitation.getEmail(), invitation.getToken(),
-				invitation.getOrganization().getDisplayName(), invitation.getInvitedBy().getDisplayName(),
+				organizationName, invitation.getInvitedBy().getDisplayName(),
 				invitation.getRole().name());
 			LOG.info("Invitation email resent successfully: id={}, email={}", invitation.id, invitation.getEmail());
 		}
