@@ -27,6 +27,26 @@ Fuggs automatisiert die Belegverarbeitung mit einem intelligenten Multi-Schritt-
 
 Die ZugFerd-Integration nutzt das Open-Source [Mustang Project](https://www.mustangproject.org/) und unterstützt deutsche e-Rechnungsstandards (ZugFerd, XRechnung, Factur-X).
 
+## Entwicklung
+
+### Test-Benutzer
+
+Im Dev-Modus (`./mvnw quarkus:dev`) startet Quarkus Dev Services automatisch einen Keycloak mit dem Realm `fuggs`. Beim Start werden zwei Test-Organisationen und drei Benutzer angelegt (siehe `app.fuggs.fuggs-app/src/main/resources/application.properties`):
+
+| Benutzer | Passwort   | Rollen                      | Organisation                             |
+|----------|------------|-----------------------------|------------------------------------------|
+| `admin`  | `password` | `super_admin, admin, user`  | Musikverein Harmonie e.V.                |
+| `maria`  | `password` | `admin, user`               | Musikverein Harmonie e.V.                |
+| `thomas` | `password` | `user`                      | Sportverein Alpenblick e.V.              |
+
+Damit lassen sich alle Berechtigungsstufen sowie die Mandantentrennung (zwei Organisationen) testen:
+
+- **admin** – Systemadministrator mit Vollzugriff (Super Admin)
+- **maria** – Organisations-Administratorin des Musikvereins
+- **thomas** – Reguläres Mitglied im Sportverein (anderer Mandant als admin/maria)
+
+Die Test-Benutzer existieren nur im Dev-Modus und werden bei jedem Start neu angelegt.
+
 ## Contributors
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
