@@ -5,7 +5,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,19 @@ public class DataSeeder
 	TransactionRecordRepository transactionRepository;
 
 	/**
+	 * Telegram username to seed onto the demo member "Max Mustermann", so the
+	 * Telegram bot can be tested end-to-end in dev. Empty by default.
+	 * <p>
+	 * {@code Optional<String>} rather than a plain {@code String} - Quarkus's
+	 * built-in converter treats an empty-string config value as "absent" and
+	 * fails eager validation of a non-optional {@code String} property, which
+	 * would otherwise break application startup whenever the property is unset
+	 * (the default).
+	 */
+	@ConfigProperty(name = "fuggs.bootstrap.telegram-username")
+	Optional<String> devTelegramUsername;
+
+	/**
 	 * Seeds demo data for all organizations.
 	 *
 	 * @param orgs
@@ -78,8 +93,14 @@ public class DataSeeder
 		if (memberRepository.findByUsername("max.mustermann") == null)
 		{
 			// Create demo members (NOT auth-linked)
-			createMember("Max", "Mustermann", "max.mustermann",
+			Member primaryMember = createMember("Max", "Mustermann", "max.mustermann",
 				"max.mustermann@harmonie.local", "+49 89 123456", org);
+			if (devTelegramUsername.isPresent() && !devTelegramUsername.get().isBlank())
+			{
+				primaryMember.setTelegramUsername(devTelegramUsername.get());
+				LOG.info("Seeded Telegram username onto demo member {}: @{}",
+					primaryMember.getUserName(), primaryMember.getTelegramUsername());
+			}
 			Member secondaryMember = createMember("Lisa", "Schmidt", "lisa.schmidt",
 				"lisa.schmidt@harmonie.local", null, org);
 

@@ -18,6 +18,7 @@ public class WireMockTestProfile implements QuarkusTestProfile
 		config.put("quarkus.wiremock.devservices.enabled", "true");
 		config.put("quarkus.wiremock.devservices.port", String.valueOf(WIREMOCK_PORT));
 		config.put("quarkus.rest-client.telegram.url", "http://localhost:" + WIREMOCK_PORT);
+		config.put("quarkus.rest-client.fuggs-app.url", "http://localhost:" + WIREMOCK_PORT);
 		config.put("fuggs.telegram.bot-token", TEST_TOKEN);
 		// Keep the scheduled poller off so it cannot race the assertions;
 		// tests drive poll() directly.

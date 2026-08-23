@@ -74,6 +74,9 @@ public class DocumentResource extends Controller
 	DocumentDataService dataService;
 
 	@Inject
+	app.fuggs.document.service.DocumentIntakeService intakeService;
+
+	@Inject
 	OrganizationContext organizationContext;
 
 	@Inject
@@ -268,7 +271,6 @@ public class DocumentResource extends Controller
 		redirect(DocumentResource.class).review(documentId);
 	}
 
-	@Transactional(Transactional.TxType.REQUIRES_NEW)
 	Long createAndPersistDocument(FileUpload file)
 	{
 		// Get current organization
@@ -278,26 +280,18 @@ public class DocumentResource extends Controller
 			throw new IllegalStateException("Organization not found");
 		}
 
-		Document document = new Document();
-		document.setTotal(java.math.BigDecimal.ZERO);
-		// Placeholder will be filled by AI
-		document.setCurrencyCode("EUR");
-		document.setAnalysisStatus(AnalysisStatus.PENDING);
-		document.setDocumentStatus(DocumentStatus.UPLOADED);
-		document.setUploadedBy(securityIdentity.getPrincipal().getName());
-		document.setOrganization(currentOrg);
-
-		handleFileUpload(document, file);
-		documentRepository.persist(document);
-
-		// Trigger AI analysis workflow (auto-start as per user preference)
-		boolean analysisStarted = triggerDocumentAnalysis(document);
-
-		if (!analysisStarted)
+		byte[] content;
+		try
 		{
-			analysisService.markAnalysisFailed(document,
-				KI_DIENST_NICHT_VERFÜGBAR_BITTE_FÜLLEN_SIE_DIE_FELDER_MANUELL_AUS);
+			content = java.nio.file.Files.readAllBytes(file.uploadedFile());
 		}
+		catch (java.io.IOException e)
+		{
+			throw new RuntimeException("Fehler beim Lesen der hochgeladenen Datei", e);
+		}
+
+		Document document = intakeService.intake(currentOrg, securityIdentity.getPrincipal().getName(),
+			content, file.fileName(), file.contentType());
 
 		return document.getId();
 	}

@@ -51,6 +51,42 @@ public class DocumentFileService
 	}
 
 	/**
+	 * Handles a file upload from raw bytes rather than a {@link FileUpload}:
+	 * stores the file in S3 and updates document metadata. Used by intake paths
+	 * that don't go through a multipart form on this service (e.g. the Telegram
+	 * bot).
+	 *
+	 * @param document
+	 *            the document to attach the file to
+	 * @param content
+	 *            the file bytes
+	 * @param fileName
+	 *            the original filename
+	 * @param contentType
+	 *            the MIME type
+	 */
+	public void handleFileUpload(Document document, byte[] content, String fileName, String contentType)
+	{
+		String fileKey = "documents/" + UUID.randomUUID() + "/" + fileName;
+
+		try
+		{
+			storageService.uploadFile(fileKey, content, contentType);
+			LOG.info("File uploaded to storage: key={}, size={}", fileKey, content.length);
+
+			document.setFileKey(fileKey);
+			document.setFileName(fileName);
+			document.setFileContentType(contentType);
+			document.setFileSize((long)content.length);
+		}
+		catch (Exception e)
+		{
+			LOG.error("Failed to upload file", e);
+			throw new RuntimeException("Fehler beim Hochladen der Datei", e);
+		}
+	}
+
+	/**
 	 * Deletes a file from storage.
 	 *
 	 * @param fileKey

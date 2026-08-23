@@ -64,6 +64,13 @@ public class Member extends PanacheEntity
 	@Column(name = "keycloak_user_id", unique = true)
 	private String keycloakUserId;
 
+	/**
+	 * Telegram username (without leading '@'), stored lowercase. Used to map
+	 * incoming Telegram messages to this member.
+	 */
+	@Column(name = "telegram_username", unique = true, length = 32)
+	private String telegramUsername;
+
 	public Long getId()
 	{
 		return id;
@@ -177,5 +184,47 @@ public class Member extends PanacheEntity
 	public void setKeycloakUserId(String keycloakUserId)
 	{
 		this.keycloakUserId = keycloakUserId;
+	}
+
+	public String getTelegramUsername()
+	{
+		return telegramUsername;
+	}
+
+	/**
+	 * Normalizes the given Telegram username: strips a leading '@', trims
+	 * whitespace, and lowercases it (Telegram usernames are case-insensitive).
+	 * An empty result is stored as {@code null}.
+	 *
+	 * @param telegramUsername
+	 *            the raw username, possibly with a leading '@'
+	 */
+	public void setTelegramUsername(String telegramUsername)
+	{
+		this.telegramUsername = normalizeTelegramUsername(telegramUsername);
+	}
+
+	/**
+	 * Normalizes a Telegram username the same way {@link #setTelegramUsername}
+	 * does, without requiring a {@code Member} instance. Used by lookups so the
+	 * comparison stays consistent with what is stored.
+	 *
+	 * @param telegramUsername
+	 *            the raw username, possibly with a leading '@'
+	 * @return the normalized username, or {@code null} if blank
+	 */
+	public static String normalizeTelegramUsername(String telegramUsername)
+	{
+		if (telegramUsername == null)
+		{
+			return null;
+		}
+		String normalized = telegramUsername.trim();
+		if (normalized.startsWith("@"))
+		{
+			normalized = normalized.substring(1);
+		}
+		normalized = normalized.toLowerCase(java.util.Locale.ROOT);
+		return normalized.isBlank() ? null : normalized;
 	}
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import app.fuggs.bot.telegram.model.SendMessageRequest;
+import app.fuggs.bot.telegram.model.TelegramFile;
 import app.fuggs.bot.telegram.model.TelegramResponse;
 import app.fuggs.bot.telegram.model.TelegramUpdate;
 import app.fuggs.bot.telegram.model.TelegramUser;
@@ -59,6 +60,24 @@ public interface TelegramClient
 		@PathParam("token") String token,
 		@QueryParam("offset") Long offset,
 		@QueryParam("timeout") Integer timeout);
+
+	/**
+	 * Resolves the download path for a file previously referenced by a
+	 * {@code file_id}. The returned {@code filePath} must be combined with the
+	 * bot token to build the actual download URL - see
+	 * {@code https://api.telegram.org/file/bot<token>/<filePath>}.
+	 *
+	 * @param token
+	 *            the bot token
+	 * @param fileId
+	 *            the file id from an incoming message
+	 * @return file metadata including the download path
+	 */
+	@GET
+	@Path("/bot{token}/getFile")
+	TelegramResponse<TelegramFile> getFile(
+		@PathParam("token") String token,
+		@QueryParam("file_id") String fileId);
 
 	/**
 	 * Sends a text message to a chat.

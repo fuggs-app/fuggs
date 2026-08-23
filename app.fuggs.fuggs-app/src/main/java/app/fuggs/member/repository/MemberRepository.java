@@ -103,4 +103,23 @@ public class MemberRepository implements PanacheRepository<Member>
 	{
 		return find("userName", userName).firstResult();
 	}
+
+	/**
+	 * Finds a member by Telegram username (NOT scoped to organization). Used by
+	 * the Telegram bot to identify the sender of an incoming message.
+	 *
+	 * @param telegramUsername
+	 *            the Telegram username, normalized the same way as
+	 *            {@link Member#setTelegramUsername(String)}
+	 * @return the member, or null if not found
+	 */
+	public Member findByTelegramUsername(String telegramUsername)
+	{
+		String normalized = Member.normalizeTelegramUsername(telegramUsername);
+		if (normalized == null)
+		{
+			return null;
+		}
+		return find("telegramUsername", normalized).firstResult();
+	}
 }
