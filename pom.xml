@@ -14,5 +14,6 @@
         <module>app.fuggs.fuggs-app</module>
         <module>app.fuggs.zugferd</module>
         <module>app.fuggs.az-document-ai</module>
+        <module>app.fuggs.fuggs-bot</module>
     </modules>
 </project>
