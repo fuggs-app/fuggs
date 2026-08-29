@@ -11,8 +11,13 @@ package app.fuggs.bot.document;
  * E.164 phone number, ...), and this pair is all it needs from any channel
  * adapter to do that.
  * </p>
+ * <p>
+ * {@code pushAddress} lets fuggs-app capture whatever it needs to message this
+ * sender again later (e.g. Telegram's numeric chat id, which cannot be derived
+ * from the username) - {@code null} when the channel has nothing to capture.
+ * </p>
  */
-public record IntakeRequest(String channel, String senderIdentifier, String fileName, String contentType,
-	String fileBase64)
+public record IntakeRequest(String channel, String senderIdentifier, String pushAddress, String fileName,
+	String contentType, String fileBase64)
 {
 }

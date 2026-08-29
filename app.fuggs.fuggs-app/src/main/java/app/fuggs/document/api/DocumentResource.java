@@ -12,6 +12,9 @@ import app.fuggs.document.repository.DocumentRepository;
 import app.fuggs.document.service.DocumentAnalysisService;
 import app.fuggs.document.service.DocumentDataService;
 import app.fuggs.document.service.DocumentFileService;
+import app.fuggs.member.domain.Member;
+import app.fuggs.member.repository.MemberRepository;
+import app.fuggs.messaging.BotNotificationService;
 import app.fuggs.organization.domain.Organization;
 import app.fuggs.shared.security.OrganizationContext;
 import app.fuggs.shared.util.FlashKeys;
@@ -81,6 +84,12 @@ public class DocumentResource extends Controller
 
 	@Inject
 	app.fuggs.document.flow.DocumentAnalysisActivitiesService activitiesService;
+
+	@Inject
+	MemberRepository memberRepository;
+
+	@Inject
+	BotNotificationService botNotificationService;
 
 	@CheckedTemplate
 	public static class Templates
@@ -816,6 +825,12 @@ public class DocumentResource extends Controller
 
 		LOG.info("Transaction created from document: documentId={}, transactionId={}",
 			document.getId(), transaction.getId());
+
+		// AC #94.3: tell the original bot uploader their receipt is booked.
+		// Best-effort - never allowed to fail the booking itself.
+		Member processedBy = memberRepository.findByUsername(securityIdentity.getPrincipal().getName());
+		botNotificationService.notifyTransactionBooked(document,
+			processedBy != null ? processedBy.getDisplayName() : null);
 		flash(FlashKeys.SUCCESS, "Transaktion erstellt aus Beleg \"" + document.getDisplayName() + "\"");
 		redirect(app.fuggs.transaction.api.TransactionResource.class).show(transaction.getId());
 	}

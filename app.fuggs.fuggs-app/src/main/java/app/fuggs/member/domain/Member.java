@@ -71,6 +71,16 @@ public class Member extends PanacheEntity
 	@Column(name = "telegram_username", unique = true, length = 32)
 	private String telegramUsername;
 
+	/**
+	 * Telegram's numeric chat id, captured the first time this member submits a
+	 * document via the bot. The Telegram Bot API cannot message a user by
+	 * username - only by this id - so it has to be captured from an inbound
+	 * message before any proactive notification (e.g. "your receipt was
+	 * booked") can be sent later.
+	 */
+	@Column(name = "telegram_chat_id", unique = true)
+	private Long telegramChatId;
+
 	public Long getId()
 	{
 		return id;
@@ -226,5 +236,15 @@ public class Member extends PanacheEntity
 		}
 		normalized = normalized.toLowerCase(java.util.Locale.ROOT);
 		return normalized.isBlank() ? null : normalized;
+	}
+
+	public Long getTelegramChatId()
+	{
+		return telegramChatId;
+	}
+
+	public void setTelegramChatId(Long telegramChatId)
+	{
+		this.telegramChatId = telegramChatId;
 	}
 }

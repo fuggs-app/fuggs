@@ -58,7 +58,7 @@ class TelegramBotIntakeVisibilityTest extends BaseOrganizationTest
 
 		Number documentId = given()
 			.contentType("application/json")
-			.body(new BotDocumentResource.IntakeRequest("telegram", "hugo_visibility_test", "Kaufland.pdf",
+			.body(new BotDocumentResource.IntakeRequest("telegram", "hugo_visibility_test", null, "Kaufland.pdf",
 				"application/pdf", FILE_BASE64))
 			.when()
 			.post("/api/bot/documents")

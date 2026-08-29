@@ -135,7 +135,8 @@ class TelegramPollerTest
 				"error": null,
 				"name": "Kaufland",
 				"total": 12.34,
-				"currencyCode": "EUR"
+				"currencyCode": "EUR",
+				"message": "Danke, dass du den Kaufland-Beleg hochgeladen hast! Dein Bommelwart wurde schon informiert."
 			}
 			""");
 		stubSendMessage();
@@ -144,7 +145,7 @@ class TelegramPollerTest
 
 		awaitSendMessageContaining("Kaufland");
 		wireMock.verifyThat(postRequestedFor(urlPathEqualTo(SEND_MESSAGE_PATH))
-			.withRequestBody(containing("erfolgreich")));
+			.withRequestBody(containing("Bommelwart wurde schon informiert")));
 	}
 
 	@Test
@@ -161,7 +162,8 @@ class TelegramPollerTest
 				"error": "KI-Analyse fehlgeschlagen: io.netty.channel.AbstractChannel$AnnotatedConnectException: Connection refused: localhost/127.0.0.1:8100",
 				"name": null,
 				"total": null,
-				"currencyCode": null
+				"currencyCode": null,
+				"message": "Dein Beleg wurde hochgeladen. Die automatische Analyse hat diesmal nicht geklappt, du kannst den Beleg aber bereits in Fuggs sehen."
 			}
 			""");
 		stubSendMessage();
@@ -179,12 +181,17 @@ class TelegramPollerTest
 		stubGetUpdates(documentUpdate(700007, "unregistered_user", "Kaufland.pdf", 20481));
 		stubGetFile("BQACAgIAAx", "documents/Kaufland.pdf");
 		stubFileDownload("documents/Kaufland.pdf");
-		stubSubmitDocument(404, "{\"error\": \"unknown_member\"}");
+		stubSubmitDocument(404, """
+			{
+				"error": "unknown_member",
+				"message": "Wir konnten dein Konto bei Fuggs nicht finden, wende dich bitte an deinen Bommelwart."
+			}
+			""");
 		stubSendMessage();
 
 		poller.pollOnce();
 
-		awaitSendMessageContaining("zugeordnet");
+		awaitSendMessageContaining("Bommelwart");
 	}
 
 	private String documentUpdate(long updateId, String username, String fileName, long fileSize)

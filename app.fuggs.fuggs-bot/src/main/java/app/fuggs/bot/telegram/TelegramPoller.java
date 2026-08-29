@@ -50,10 +50,22 @@ public class TelegramPoller
 	/** Telegram bots cannot download files larger than this. */
 	private static final long MAX_FILE_SIZE_BYTES = 20L * 1024 * 1024;
 
+	/**
+	 * Not covered by issue #94's "every message is LLM-generated" AC - this
+	 * fires before fuggs-app is ever contacted (no username to look up at all),
+	 * so there are no business facts to hand an LLM yet.
+	 */
 	private static final String NO_USERNAME_MESSAGE = "Bitte lege in Telegram einen Benutzernamen fest "
 		+ "(Einstellungen -> Benutzername), damit Fuggs dich einem Mitglied zuordnen kann.";
-	private static final String UNKNOWN_SENDER_MESSAGE = "Dein Telegram-Konto ist noch keinem Fuggs-Mitglied "
-		+ "zugeordnet. Bitte deinen Bommelwart, deinen Telegram-Benutzernamen in den Stammdaten zu hinterlegen.";
+
+	/**
+	 * These three are pure Telegram-transport/infra conditions - a file too big
+	 * to download, a failed download, fuggs-app unreachable - not business
+	 * messages, so they stay static per the documented LLM-fallback decision in
+	 * {@code docs/plan-telegram-bot.md}. Every message the three ACs actually
+	 * cover (unknown sender, upload ack, transaction booked) comes from
+	 * fuggs-app already LLM-generated via {@link IntakeOutcome}.
+	 */
 	private static final String FILE_TOO_LARGE_MESSAGE = "Diese Datei ist zu groß (max. 20 MB). "
 		+ "Bitte sende den Beleg als kleinere Datei.";
 	private static final String DOWNLOAD_FAILED_MESSAGE = "Der Beleg konnte nicht von Telegram heruntergeladen "
@@ -62,18 +74,6 @@ public class TelegramPoller
 		+ "aufgetreten. Bitte versuche es später erneut oder lade den Beleg direkt in Fuggs hoch.";
 	private static final String STILL_PROCESSING_MESSAGE = "Der Beleg wird noch analysiert. Du bekommst "
 		+ "noch keine Bestätigung, kannst den Beleg aber bereits in Fuggs sehen.";
-
-	/**
-	 * Deliberately does not surface the raw analysis error - see
-	 * {@link IntakeOutcome.AnalysisFailed}. The document itself was already
-	 * created successfully; only the automatic extraction failed, so the
-	 * message stays reassuring and points at Fuggs for the manual fallback,
-	 * mirroring the generic banner {@code review.html} shows for the same
-	 * failure state.
-	 */
-	private static final String ANALYSIS_FAILED_MESSAGE = "Dein Beleg wurde hochgeladen. Die automatische Analyse "
-		+ "hat diesmal nicht geklappt, du kannst den Beleg aber bereits in Fuggs sehen und die Daten dort prüfen "
-		+ "und ergänzen.";
 
 	@Inject
 	TelegramConfig config;
@@ -217,8 +217,8 @@ public class TelegramPoller
 				return;
 			}
 
-			IntakeOutcome outcome = receiptIntakeService.submit(CHANNEL, username, content, file.fileName(),
-				file.contentType());
+			IntakeOutcome outcome = receiptIntakeService.submit(CHANNEL, username, String.valueOf(chatId), content,
+				file.fileName(), file.contentType());
 			reply(chatId, toReplyText(outcome));
 		}
 		catch (Exception e)
@@ -251,40 +251,21 @@ public class TelegramPoller
 	}
 
 	/**
-	 * Words the channel-agnostic {@link IntakeOutcome} into Telegram-facing
-	 * German text. A future channel adapter (e.g. WhatsApp) would have its own
-	 * version of this method with its own tone, rather than sharing one.
+	 * Words the channel-agnostic {@link IntakeOutcome} into the Telegram reply.
+	 * For {@code Success}/{@code AnalysisFailed}/{@code UnknownSender} that's
+	 * just relaying fuggs-app's LLM-generated text verbatim; the two pure-infra
+	 * outcomes fall back to this adapter's own static text.
 	 */
 	private String toReplyText(IntakeOutcome outcome)
 	{
 		return switch (outcome)
 		{
-			case IntakeOutcome.Success success -> buildSuccessMessage(success);
-			case IntakeOutcome.AnalysisFailed ignored -> ANALYSIS_FAILED_MESSAGE;
-			case IntakeOutcome.UnknownSender ignored -> UNKNOWN_SENDER_MESSAGE;
+			case IntakeOutcome.Success success -> success.message();
+			case IntakeOutcome.AnalysisFailed failed -> failed.message();
+			case IntakeOutcome.UnknownSender unknown -> unknown.message();
 			case IntakeOutcome.StillProcessing ignored -> STILL_PROCESSING_MESSAGE;
 			case IntakeOutcome.SubmissionFailed ignored -> GENERIC_FAILURE_MESSAGE;
 		};
-	}
-
-	private String buildSuccessMessage(IntakeOutcome.Success success)
-	{
-		StringBuilder message = new StringBuilder("Beleg erfolgreich verarbeitet");
-		if (success.vendorName() != null && !success.vendorName().isBlank())
-		{
-			message.append(": ").append(success.vendorName());
-		}
-		if (success.total() != null)
-		{
-			message.append(" (").append(success.total());
-			if (success.currencyCode() != null && !success.currencyCode().isBlank())
-			{
-				message.append(" ").append(success.currencyCode());
-			}
-			message.append(")");
-		}
-		message.append(". Du kannst ihn in Fuggs prüfen und bestätigen.");
-		return message.toString();
 	}
 
 	private void reply(Long chatId, String text)

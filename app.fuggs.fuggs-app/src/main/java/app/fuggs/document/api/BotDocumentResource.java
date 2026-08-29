@@ -5,8 +5,10 @@ import app.fuggs.document.repository.DocumentRepository;
 import app.fuggs.document.service.DocumentIntakeService;
 import app.fuggs.member.domain.Member;
 import app.fuggs.member.repository.MemberRepository;
+import app.fuggs.messaging.BotNotificationService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
@@ -63,6 +65,9 @@ public class BotDocumentResource
 	@Inject
 	DocumentIntakeService intakeService;
 
+	@Inject
+	BotNotificationService botNotificationService;
+
 	/**
 	 * {@code Optional<String>} rather than a plain {@code String} - Quarkus's
 	 * built-in converter treats an empty-string config value as "absent" and
@@ -76,9 +81,16 @@ public class BotDocumentResource
 	/**
 	 * {@code channel} plus {@code senderIdentifier} is deliberately generic
 	 * rather than e.g. {@code telegramUsername} - see the class Javadoc.
+	 * {@code pushAddress} is separate from {@code senderIdentifier} because the
+	 * two can differ per channel: Telegram cannot message a user by username at
+	 * all, only by the numeric chat id captured here (see
+	 * {@link Member#getTelegramChatId()}), whereas a future WhatsApp channel
+	 * would need no such value since its phone number identifier already
+	 * doubles as the address to message back. {@code null} when the channel has
+	 * nothing to capture.
 	 */
-	public record IntakeRequest(String channel, String senderIdentifier, String fileName, String contentType,
-		String fileBase64)
+	public record IntakeRequest(String channel, String senderIdentifier, String pushAddress, String fileName,
+		String contentType, String fileBase64)
 	{
 	}
 
@@ -86,16 +98,26 @@ public class BotDocumentResource
 	{
 	}
 
-	public record ErrorResponse(String error)
+	/**
+	 * {@code message}, when present, is LLM-generated, ready-to-send text
+	 * (issue #94: "Alle Nachrichten werden vom LLM generiert") - the bot
+	 * service should relay it verbatim rather than composing its own wording.
+	 */
+	public record ErrorResponse(String error, String message)
 	{
 	}
 
+	/**
+	 * {@code message}, when present, is the LLM-generated upload
+	 * acknowledgement (AC #2) - see {@code ErrorResponse}.
+	 */
 	public record StatusResponse(String status, boolean complete, String error, String name,
-		java.math.BigDecimal total, String currencyCode)
+		java.math.BigDecimal total, String currencyCode, String message)
 	{
 	}
 
 	@POST
+	@Transactional
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response submit(@HeaderParam("X-Bot-Secret") String secret, IntakeRequest request)
@@ -109,7 +131,7 @@ public class BotDocumentResource
 			|| request.fileName().isBlank())
 		{
 			return Response.status(Response.Status.BAD_REQUEST)
-				.entity(new ErrorResponse("missing_file"))
+				.entity(new ErrorResponse("missing_file", null))
 				.build();
 		}
 
@@ -119,9 +141,11 @@ public class BotDocumentResource
 			LOG.info("Bot document submission rejected, unknown sender: channel={}, senderIdentifier={}",
 				request.channel(), request.senderIdentifier());
 			return Response.status(Response.Status.NOT_FOUND)
-				.entity(new ErrorResponse("unknown_member"))
+				.entity(new ErrorResponse("unknown_member", botNotificationService.unknownSenderMessage()))
 				.build();
 		}
+
+		capturePushAddress(member, request.channel(), request.pushAddress());
 
 		byte[] content;
 		try
@@ -132,7 +156,7 @@ public class BotDocumentResource
 		{
 			LOG.warn("Bot document submission rejected, invalid base64 content: member={}", member.getUserName());
 			return Response.status(Response.Status.BAD_REQUEST)
-				.entity(new ErrorResponse("invalid_file_encoding"))
+				.entity(new ErrorResponse("invalid_file_encoding", null))
 				.build();
 		}
 
@@ -157,13 +181,44 @@ public class BotDocumentResource
 		Document document = documentRepository.findById(id);
 		if (document == null)
 		{
-			return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("not_found")).build();
+			return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("not_found", null)).build();
 		}
 
 		String status = document.getAnalysisStatus() != null ? document.getAnalysisStatus().name() : "PENDING";
+		boolean analysisFailed = document.getAnalysisError() != null && !document.getAnalysisError().isBlank();
+		String message = document.isAnalysisComplete()
+			? botNotificationService.uploadAcknowledgedMessage(document, analysisFailed)
+			: null;
 		return Response.ok(new StatusResponse(status, document.isAnalysisComplete(),
 			document.getAnalysisError(), document.getDisplayName(), document.getTotal(),
-			document.getCurrencyCode())).build();
+			document.getCurrencyCode(), message)).build();
+	}
+
+	/**
+	 * Persists the channel's proactive-notification address onto the member, if
+	 * the channel provided one and it changed. Currently only
+	 * {@code "telegram"} has anything to capture - see the {@code
+	 * IntakeRequest} Javadoc for why this isn't a generic concept.
+	 */
+	private void capturePushAddress(Member member, String channel, String pushAddress)
+	{
+		if (!CHANNEL_TELEGRAM.equals(channel) || pushAddress == null || pushAddress.isBlank())
+		{
+			return;
+		}
+		try
+		{
+			Long chatId = Long.valueOf(pushAddress);
+			if (!chatId.equals(member.getTelegramChatId()))
+			{
+				member.setTelegramChatId(chatId);
+			}
+		}
+		catch (NumberFormatException e)
+		{
+			LOG.warn("Ignoring non-numeric Telegram pushAddress: member={}, pushAddress={}",
+				member.getUserName(), pushAddress);
+		}
 	}
 
 	/**
@@ -199,6 +254,6 @@ public class BotDocumentResource
 
 	private Response unauthorized()
 	{
-		return Response.status(Response.Status.UNAUTHORIZED).entity(new ErrorResponse("unauthorized")).build();
+		return Response.status(Response.Status.UNAUTHORIZED).entity(new ErrorResponse("unauthorized", null)).build();
 	}
 }
