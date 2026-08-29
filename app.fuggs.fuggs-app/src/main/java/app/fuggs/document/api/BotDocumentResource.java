@@ -24,10 +24,11 @@ import java.util.Base64;
 import java.util.Optional;
 
 /**
- * Internal, machine-to-machine document intake for the Telegram bot service
- * (and any future chat bot). Deliberately not a Renarde {@code Controller} and
- * not {@code @Authenticated} - the caller has no user session, only a shared
- * secret. Requests without a matching {@code X-Bot-Secret} header are rejected.
+ * Internal, machine-to-machine document intake shared by every chat bot channel
+ * (Telegram today; a future WhatsApp integration would call the same endpoint).
+ * Deliberately not a Renarde {@code Controller} and not {@code @Authenticated}
+ * - the caller has no user session, only a shared secret. Requests without a
+ * matching {@code X-Bot-Secret} header are rejected.
  * <p>
  * Uses a JSON body rather than multipart/form-data. Quarkus's global CSRF
  * filter (`quarkus-rest-csrf`, active application-wide for every POST/PUT/
@@ -36,12 +37,22 @@ import java.util.Optional;
  * any other content type - JSON is the standard escape hatch, since it can't be
  * submitted by a naive cross-site HTML form the way multipart can.
  * </p>
+ * <p>
+ * Sender resolution is per-{@code channel} ({@link #resolveMember}) because
+ * each channel identifies members differently - Telegram by username, a future
+ * WhatsApp channel by E.164 phone number. Adding a channel means one more
+ * {@code case} there plus that channel's own {@code Member} column and
+ * repository lookup (see {@link MemberRepository#findByTelegramUsername} for
+ * the existing precedent) - nothing else in this class changes.
+ * </p>
  */
 @Path("/api/bot/documents")
 @ApplicationScoped
 public class BotDocumentResource
 {
 	private static final Logger LOG = LoggerFactory.getLogger(BotDocumentResource.class);
+
+	private static final String CHANNEL_TELEGRAM = "telegram";
 
 	@Inject
 	MemberRepository memberRepository;
@@ -62,7 +73,12 @@ public class BotDocumentResource
 	@ConfigProperty(name = "fuggs.bot.shared-secret")
 	Optional<String> sharedSecret;
 
-	public record IntakeRequest(String telegramUsername, String fileName, String contentType, String fileBase64)
+	/**
+	 * {@code channel} plus {@code senderIdentifier} is deliberately generic
+	 * rather than e.g. {@code telegramUsername} - see the class Javadoc.
+	 */
+	public record IntakeRequest(String channel, String senderIdentifier, String fileName, String contentType,
+		String fileBase64)
 	{
 	}
 
@@ -97,11 +113,11 @@ public class BotDocumentResource
 				.build();
 		}
 
-		Member member = memberRepository.findByTelegramUsername(request.telegramUsername());
+		Member member = resolveMember(request.channel(), request.senderIdentifier());
 		if (member == null)
 		{
-			LOG.info("Bot document submission rejected, unknown Telegram username: @{}",
-				request.telegramUsername());
+			LOG.info("Bot document submission rejected, unknown sender: channel={}, senderIdentifier={}",
+				request.channel(), request.senderIdentifier());
 			return Response.status(Response.Status.NOT_FOUND)
 				.entity(new ErrorResponse("unknown_member"))
 				.build();
@@ -148,6 +164,24 @@ public class BotDocumentResource
 		return Response.ok(new StatusResponse(status, document.isAnalysisComplete(),
 			document.getAnalysisError(), document.getDisplayName(), document.getTotal(),
 			document.getCurrencyCode())).build();
+	}
+
+	/**
+	 * Resolves a sender identifier to a {@code Member}, dispatching on
+	 * {@code channel} since each channel identifies members differently. An
+	 * unrecognized or missing channel resolves to no member, which the caller
+	 * reports as the same "unknown sender" response as an unmatched identifier
+	 * - there is no separate "unsupported channel" error, since from the bot's
+	 * perspective both mean the same thing: this sender can't be forwarded a
+	 * document.
+	 */
+	private Member resolveMember(String channel, String senderIdentifier)
+	{
+		return switch (channel == null ? "" : channel)
+		{
+			case CHANNEL_TELEGRAM -> memberRepository.findByTelegramUsername(senderIdentifier);
+			default -> null;
+		};
 	}
 
 	/**

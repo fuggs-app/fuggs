@@ -1,16 +1,13 @@
 package app.fuggs.bot.telegram;
 
-import java.util.Base64;
 import java.util.List;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import app.fuggs.bot.document.FuggsAppClient;
-import app.fuggs.bot.document.IntakeRequest;
-import app.fuggs.bot.document.IntakeResponse;
-import app.fuggs.bot.document.StatusResponse;
+import app.fuggs.bot.document.IntakeOutcome;
+import app.fuggs.bot.document.ReceiptIntakeService;
 import app.fuggs.bot.telegram.model.SendMessageRequest;
 import app.fuggs.bot.telegram.model.TelegramDocument;
 import app.fuggs.bot.telegram.model.TelegramFile;
@@ -22,15 +19,21 @@ import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
 
 /**
  * Polls Telegram for incoming updates and forwards received receipts into the
- * fuggs-app document/bill pipeline via {@link FuggsAppClient}.
+ * fuggs-app document/bill pipeline via {@link ReceiptIntakeService}.
  * <p>
  * Long polling is used instead of a webhook because it needs no publicly
  * reachable HTTPS endpoint, which makes local development possible without a
  * tunnel. A webhook transport is planned for production.
+ * </p>
+ * <p>
+ * This class only handles Telegram transport - reading updates, downloading
+ * attachments, sending replies - and Telegram-specific wording. The actual
+ * submit-and-poll business logic lives in {@link ReceiptIntakeService}, which
+ * knows nothing about Telegram; a future channel (e.g. WhatsApp) would add its
+ * own adapter following this same shape rather than touching that service.
  * </p>
  */
 @ApplicationScoped
@@ -38,11 +41,14 @@ public class TelegramPoller
 {
 	private static final Logger LOG = LoggerFactory.getLogger(TelegramPoller.class);
 
+	/**
+	 * The channel identifier fuggs-app's {@code BotDocumentResource} resolves
+	 * members by.
+	 */
+	private static final String CHANNEL = "telegram";
+
 	/** Telegram bots cannot download files larger than this. */
 	private static final long MAX_FILE_SIZE_BYTES = 20L * 1024 * 1024;
-
-	private static final int STATUS_POLL_INTERVAL_MS = 2000;
-	private static final int STATUS_POLL_MAX_ATTEMPTS = 15;
 
 	private static final String NO_USERNAME_MESSAGE = "Bitte lege in Telegram einen Benutzernamen fest "
 		+ "(Einstellungen -> Benutzername), damit Fuggs dich einem Mitglied zuordnen kann.";
@@ -57,17 +63,29 @@ public class TelegramPoller
 	private static final String STILL_PROCESSING_MESSAGE = "Der Beleg wird noch analysiert. Du bekommst "
 		+ "noch keine Bestätigung, kannst den Beleg aber bereits in Fuggs sehen.";
 
+	/**
+	 * Deliberately does not surface the raw analysis error - see
+	 * {@link IntakeOutcome.AnalysisFailed}. The document itself was already
+	 * created successfully; only the automatic extraction failed, so the
+	 * message stays reassuring and points at Fuggs for the manual fallback,
+	 * mirroring the generic banner {@code review.html} shows for the same
+	 * failure state.
+	 */
+	private static final String ANALYSIS_FAILED_MESSAGE = "Dein Beleg wurde hochgeladen. Die automatische Analyse "
+		+ "hat diesmal nicht geklappt, du kannst den Beleg aber bereits in Fuggs sehen und die Daten dort prüfen "
+		+ "und ergänzen.";
+
 	@Inject
 	TelegramConfig config;
 
 	@Inject
 	TelegramFileDownloader fileDownloader;
 
-	@RestClient
-	TelegramClient client;
+	@Inject
+	ReceiptIntakeService receiptIntakeService;
 
 	@RestClient
-	FuggsAppClient fuggsAppClient;
+	TelegramClient client;
 
 	/**
 	 * Offset of the next update to fetch. Passing it back to Telegram
@@ -177,9 +195,10 @@ public class TelegramPoller
 	}
 
 	/**
-	 * Downloads the attachment, forwards it to fuggs-app, and replies with the
-	 * outcome. Runs on a background virtual thread so the poll loop isn't
-	 * blocked while analysis completes.
+	 * Downloads the attachment, forwards it to fuggs-app via
+	 * {@link ReceiptIntakeService}, and replies with the outcome. Runs on a
+	 * background virtual thread so the poll loop isn't blocked while analysis
+	 * completes.
 	 */
 	private void processAttachment(Long chatId, String username, IncomingFile file)
 	{
@@ -198,14 +217,9 @@ public class TelegramPoller
 				return;
 			}
 
-			Long documentId = submit(chatId, username, content, file);
-			if (documentId == null)
-			{
-				// submit() already replied with the specific failure reason
-				return;
-			}
-
-			pollAndReply(chatId, documentId);
+			IntakeOutcome outcome = receiptIntakeService.submit(CHANNEL, username, content, file.fileName(),
+				file.contentType());
+			reply(chatId, toReplyText(outcome));
 		}
 		catch (Exception e)
 		{
@@ -237,122 +251,40 @@ public class TelegramPoller
 	}
 
 	/**
-	 * Submits the file to fuggs-app. Returns the created document id, or
-	 * {@code null} after already sending the appropriate reply on failure.
+	 * Words the channel-agnostic {@link IntakeOutcome} into Telegram-facing
+	 * German text. A future channel adapter (e.g. WhatsApp) would have its own
+	 * version of this method with its own tone, rather than sharing one.
 	 */
-	private Long submit(Long chatId, String username, byte[] content, IncomingFile file)
+	private String toReplyText(IntakeOutcome outcome)
 	{
-		try
+		return switch (outcome)
 		{
-			String fileBase64 = Base64.getEncoder().encodeToString(content);
-			IntakeResponse response = fuggsAppClient.submitDocument(
-				new IntakeRequest(username, file.fileName(), file.contentType(), fileBase64));
-			return response.documentId();
-		}
-		catch (WebApplicationException e)
-		{
-			int status = e.getResponse() != null ? e.getResponse().getStatus() : -1;
-			if (status == 404)
-			{
-				reply(chatId, UNKNOWN_SENDER_MESSAGE);
-			}
-			else
-			{
-				LOG.error("fuggs-app rejected document submission: chatId={}, status={}", chatId, status, e);
-				reply(chatId, GENERIC_FAILURE_MESSAGE);
-			}
-			return null;
-		}
-		catch (Exception e)
-		{
-			LOG.error("Failed to submit document to fuggs-app: chatId={}, error={}", chatId, e.getMessage(), e);
-			reply(chatId, GENERIC_FAILURE_MESSAGE);
-			return null;
-		}
+			case IntakeOutcome.Success success -> buildSuccessMessage(success);
+			case IntakeOutcome.AnalysisFailed ignored -> ANALYSIS_FAILED_MESSAGE;
+			case IntakeOutcome.UnknownSender ignored -> UNKNOWN_SENDER_MESSAGE;
+			case IntakeOutcome.StillProcessing ignored -> STILL_PROCESSING_MESSAGE;
+			case IntakeOutcome.SubmissionFailed ignored -> GENERIC_FAILURE_MESSAGE;
+		};
 	}
 
-	/**
-	 * Polls the analysis status until it completes or the attempt budget is
-	 * exhausted, then sends the matching reply.
-	 */
-	private void pollAndReply(Long chatId, Long documentId)
-	{
-		for (int attempt = 0; attempt < STATUS_POLL_MAX_ATTEMPTS; attempt++)
-		{
-			StatusResponse status;
-			try
-			{
-				status = fuggsAppClient.getStatus(documentId);
-			}
-			catch (Exception e)
-			{
-				LOG.error("Failed to check document status: documentId={}, error={}", documentId,
-					e.getMessage(), e);
-				reply(chatId, GENERIC_FAILURE_MESSAGE);
-				return;
-			}
-
-			if (status.complete())
-			{
-				reply(chatId, status.error() == null || status.error().isBlank()
-					? buildSuccessMessage(status)
-					: buildFailureMessage(status));
-				return;
-			}
-
-			sleep(STATUS_POLL_INTERVAL_MS);
-		}
-
-		LOG.info("Document analysis still running after polling budget: documentId={}", documentId);
-		reply(chatId, STILL_PROCESSING_MESSAGE);
-	}
-
-	private String buildSuccessMessage(StatusResponse status)
+	private String buildSuccessMessage(IntakeOutcome.Success success)
 	{
 		StringBuilder message = new StringBuilder("Beleg erfolgreich verarbeitet");
-		if (status.name() != null && !status.name().isBlank())
+		if (success.vendorName() != null && !success.vendorName().isBlank())
 		{
-			message.append(": ").append(status.name());
+			message.append(": ").append(success.vendorName());
 		}
-		if (status.total() != null)
+		if (success.total() != null)
 		{
-			message.append(" (").append(status.total());
-			if (status.currencyCode() != null && !status.currencyCode().isBlank())
+			message.append(" (").append(success.total());
+			if (success.currencyCode() != null && !success.currencyCode().isBlank())
 			{
-				message.append(" ").append(status.currencyCode());
+				message.append(" ").append(success.currencyCode());
 			}
 			message.append(")");
 		}
 		message.append(". Du kannst ihn in Fuggs prüfen und bestätigen.");
 		return message.toString();
-	}
-
-	/**
-	 * Deliberately does not surface {@code status.error()} - it carries the raw
-	 * exception message from the analysis pipeline (e.g. a Netty
-	 * connect-refused stack trace fragment when the AI microservice is
-	 * unreachable), which is meaningless and alarming to a member in a chat.
-	 * The document itself was already created successfully; only the automatic
-	 * extraction failed, so the message stays reassuring and points at Fuggs
-	 * for the manual fallback, mirroring the generic banner {@code review.html}
-	 * shows for the same {@code AnalysisStatus.FAILED} state.
-	 */
-	private String buildFailureMessage(StatusResponse status)
-	{
-		return "Dein Beleg wurde hochgeladen. Die automatische Analyse hat diesmal nicht geklappt, "
-			+ "du kannst den Beleg aber bereits in Fuggs sehen und die Daten dort prüfen und ergänzen.";
-	}
-
-	private void sleep(long millis)
-	{
-		try
-		{
-			Thread.sleep(millis);
-		}
-		catch (InterruptedException e)
-		{
-			Thread.currentThread().interrupt();
-		}
 	}
 
 	private void reply(Long chatId, String text)

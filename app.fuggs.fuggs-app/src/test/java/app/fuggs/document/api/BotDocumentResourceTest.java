@@ -40,8 +40,8 @@ class BotDocumentResourceTest extends BaseOrganizationTest
 		Number documentId = given()
 			.header("X-Bot-Secret", BotSharedSecretTestProfile.SECRET)
 			.contentType("application/json")
-			.body(new BotDocumentResource.IntakeRequest("@Bommelwart_Hugo", "Kaufland.pdf", "application/pdf",
-				FILE_BASE64))
+			.body(new BotDocumentResource.IntakeRequest("telegram", "@Bommelwart_Hugo", "Kaufland.pdf",
+				"application/pdf", FILE_BASE64))
 			.when()
 			.post("/api/bot/documents")
 			.then()
@@ -67,8 +67,25 @@ class BotDocumentResourceTest extends BaseOrganizationTest
 		given()
 			.header("X-Bot-Secret", BotSharedSecretTestProfile.SECRET)
 			.contentType("application/json")
-			.body(new BotDocumentResource.IntakeRequest("nobody_registered", "Kaufland.pdf", "application/pdf",
-				FILE_BASE64))
+			.body(new BotDocumentResource.IntakeRequest("telegram", "nobody_registered", "Kaufland.pdf",
+				"application/pdf", FILE_BASE64))
+			.when()
+			.post("/api/bot/documents")
+			.then()
+			.statusCode(404)
+			.body("error", equalTo("unknown_member"));
+	}
+
+	@Test
+	void shouldRejectSubmission_whenChannelIsUnsupported()
+	{
+		createMemberWithTelegramUsername("channel_test_member");
+
+		given()
+			.header("X-Bot-Secret", BotSharedSecretTestProfile.SECRET)
+			.contentType("application/json")
+			.body(new BotDocumentResource.IntakeRequest("whatsapp", "channel_test_member", "Kaufland.pdf",
+				"application/pdf", FILE_BASE64))
 			.when()
 			.post("/api/bot/documents")
 			.then()
@@ -83,8 +100,8 @@ class BotDocumentResourceTest extends BaseOrganizationTest
 
 		given()
 			.contentType("application/json")
-			.body(new BotDocumentResource.IntakeRequest("secret_test_member", "Kaufland.pdf", "application/pdf",
-				FILE_BASE64))
+			.body(new BotDocumentResource.IntakeRequest("telegram", "secret_test_member", "Kaufland.pdf",
+				"application/pdf", FILE_BASE64))
 			.when()
 			.post("/api/bot/documents")
 			.then()
@@ -97,7 +114,7 @@ class BotDocumentResourceTest extends BaseOrganizationTest
 		given()
 			.header("X-Bot-Secret", "not-the-configured-secret")
 			.contentType("application/json")
-			.body(new BotDocumentResource.IntakeRequest("irrelevant", "Kaufland.pdf", "application/pdf",
+			.body(new BotDocumentResource.IntakeRequest("telegram", "irrelevant", "Kaufland.pdf", "application/pdf",
 				FILE_BASE64))
 			.when()
 			.post("/api/bot/documents")
