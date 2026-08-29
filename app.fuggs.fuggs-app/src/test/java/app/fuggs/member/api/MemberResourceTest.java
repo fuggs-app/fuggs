@@ -122,7 +122,24 @@ class MemberResourceTest extends BaseOrganizationTest
 			.statusCode(200)
 			.body(containsString("Neues Mitglied"))
 			.body(containsString("Vorname"))
-			.body(containsString("Nachname"));
+			.body(containsString("Nachname"))
+			.body(containsString("Telegram-Benutzername"));
+	}
+
+	@Test
+	@TestSecurity(user = "bob", roles = "user")
+	void shouldShowTelegramUsernameOnDetailPage()
+	{
+		deleteAllData();
+		Long memberId = createMemberWithTelegramUsername("Hugo", "Müller", "hugo_bommelwart");
+
+		given()
+			.when()
+			.get("/mitglieder/" + memberId)
+			.then()
+			.statusCode(200)
+			.body(containsString("Telegram-Benutzername"))
+			.body(containsString("hugo_bommelwart"));
 	}
 
 	@Test
@@ -248,6 +265,20 @@ class MemberResourceTest extends BaseOrganizationTest
 		member.setLastName(lastName);
 		member.setEmail(email);
 		member.setPhone(phone);
+		member.setOrganization(org);
+		memberRepository.persist(member);
+		return member.getId();
+	}
+
+	@Transactional(Transactional.TxType.REQUIRES_NEW)
+	Long createMemberWithTelegramUsername(String firstName, String lastName, String telegramUsername)
+	{
+		Organization org = getOrCreateTestOrganization();
+
+		Member member = new Member();
+		member.setFirstName(firstName);
+		member.setLastName(lastName);
+		member.setTelegramUsername(telegramUsername);
 		member.setOrganization(org);
 		memberRepository.persist(member);
 		return member.getId();

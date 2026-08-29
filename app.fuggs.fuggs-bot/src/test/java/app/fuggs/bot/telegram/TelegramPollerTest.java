@@ -3,6 +3,7 @@ package app.fuggs.bot.telegram;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.notContaining;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
@@ -147,7 +148,7 @@ class TelegramPollerTest
 	}
 
 	@Test
-	void shouldReplyFailure_whenForwardedDocumentAnalysisFails()
+	void shouldReplyReassuringly_whenForwardedDocumentAnalysisFails()
 	{
 		stubGetUpdates(documentUpdate(700006, "sascha_test", "Kaputt.pdf", 20481));
 		stubGetFile("BQACAgIAAx", "documents/Kaputt.pdf");
@@ -157,7 +158,7 @@ class TelegramPollerTest
 			{
 				"status": "FAILED",
 				"complete": true,
-				"error": "KI-Analyse fehlgeschlagen",
+				"error": "KI-Analyse fehlgeschlagen: io.netty.channel.AbstractChannel$AnnotatedConnectException: Connection refused: localhost/127.0.0.1:8100",
 				"name": null,
 				"total": null,
 				"currencyCode": null
@@ -167,7 +168,9 @@ class TelegramPollerTest
 
 		poller.pollOnce();
 
-		awaitSendMessageContaining("fehlgeschlagen");
+		awaitSendMessageContaining("hochgeladen");
+		wireMock.verifyThat(postRequestedFor(urlPathEqualTo(SEND_MESSAGE_PATH))
+			.withRequestBody(notContaining("Connection refused")));
 	}
 
 	@Test

@@ -327,11 +327,20 @@ public class TelegramPoller
 		return message.toString();
 	}
 
+	/**
+	 * Deliberately does not surface {@code status.error()} - it carries the raw
+	 * exception message from the analysis pipeline (e.g. a Netty
+	 * connect-refused stack trace fragment when the AI microservice is
+	 * unreachable), which is meaningless and alarming to a member in a chat.
+	 * The document itself was already created successfully; only the automatic
+	 * extraction failed, so the message stays reassuring and points at Fuggs
+	 * for the manual fallback, mirroring the generic banner {@code review.html}
+	 * shows for the same {@code AnalysisStatus.FAILED} state.
+	 */
 	private String buildFailureMessage(StatusResponse status)
 	{
-		String detail = status.error() != null && !status.error().isBlank() ? ": " + status.error() : "";
-		return "Die Analyse des Belegs ist fehlgeschlagen" + detail
-			+ ". Bitte lade den Beleg direkt in Fuggs hoch und fülle die Daten manuell aus.";
+		return "Dein Beleg wurde hochgeladen. Die automatische Analyse hat diesmal nicht geklappt, "
+			+ "du kannst den Beleg aber bereits in Fuggs sehen und die Daten dort prüfen und ergänzen.";
 	}
 
 	private void sleep(long millis)
