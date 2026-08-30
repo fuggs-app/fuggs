@@ -89,6 +89,12 @@
             <groupId>io.quarkiverse.langchain4j</groupId>
             <artifactId>quarkus-langchain4j-openai</artifactId>
         </dependency>
+        <!-- E.164 phone normalization for the WhatsApp bot channel -->
+        <dependency>
+            <groupId>com.googlecode.libphonenumber</groupId>
+            <artifactId>libphonenumber</artifactId>
+            <version>9.0.32</version>
+        </dependency>
         <!-- Security -->
         <dependency>
             <groupId>io.quarkus</groupId>

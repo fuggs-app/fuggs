@@ -122,4 +122,23 @@ public class MemberRepository implements PanacheRepository<Member>
 		}
 		return find("telegramUsername", normalized).firstResult();
 	}
+
+	/**
+	 * Finds a member by WhatsApp phone number (NOT scoped to organization).
+	 * Used by the WhatsApp bot to identify the sender of an incoming message.
+	 *
+	 * @param whatsappPhone
+	 *            the phone number, normalized the same way as
+	 *            {@link Member#normalizeWhatsAppPhone(String)}
+	 * @return the member, or null if not found
+	 */
+	public Member findByWhatsAppPhoneE164(String whatsappPhone)
+	{
+		String normalized = Member.normalizeWhatsAppPhone(whatsappPhone);
+		if (normalized == null)
+		{
+			return null;
+		}
+		return find("whatsappPhoneE164", normalized).firstResult();
+	}
 }

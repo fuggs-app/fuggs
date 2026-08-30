@@ -32,6 +32,7 @@ public class BotNotificationService
 	private static final Logger LOG = LoggerFactory.getLogger(BotNotificationService.class);
 
 	private static final String CHANNEL_TELEGRAM = "telegram";
+	private static final String CHANNEL_WHATSAPP = "whatsapp";
 
 	private static final String UNKNOWN_SENDER_FALLBACK = "Wir konnten dein Konto bei Fuggs nicht finden, "
 		+ "wende dich bitte an deinen Bommelwart.";
@@ -121,7 +122,8 @@ public class BotNotificationService
 		try
 		{
 			Member uploader = memberRepository.findByUsername(document.getUploadedBy());
-			if (uploader == null || uploader.getTelegramChatId() == null)
+			NotificationTarget target = uploader != null ? resolveNotificationTarget(uploader) : null;
+			if (target == null)
 			{
 				LOG.debug("Skipping transaction-booked notification, uploader not reachable: documentId={}",
 					document.getId());
@@ -129,17 +131,39 @@ public class BotNotificationService
 			}
 
 			String message = transactionBookedMessage(document, processedByDisplayName);
-			fuggsBotClient.sendNotification(new FuggsBotClient.NotificationRequest(CHANNEL_TELEGRAM,
-				String.valueOf(uploader.getTelegramChatId()), message));
+			fuggsBotClient.sendNotification(
+				new FuggsBotClient.NotificationRequest(target.channel(), target.recipientId(), message));
 
-			LOG.info("Sent transaction-booked notification: documentId={}, member={}", document.getId(),
-				uploader.getUserName());
+			LOG.info("Sent transaction-booked notification: documentId={}, member={}, channel={}",
+				document.getId(), uploader.getUserName(), target.channel());
 		}
 		catch (Exception e)
 		{
 			LOG.error("Failed to send transaction-booked notification: documentId={}, error={}",
 				document.getId(), e.getMessage(), e);
 		}
+	}
+
+	private record NotificationTarget(String channel, String recipientId)
+	{
+	}
+
+	/**
+	 * Picks which channel to push a proactive notification through, preferring
+	 * Telegram when a member has both - arbitrary but stable, since a member
+	 * only ever has both during a transition between channels.
+	 */
+	private NotificationTarget resolveNotificationTarget(Member member)
+	{
+		if (member.getTelegramChatId() != null)
+		{
+			return new NotificationTarget(CHANNEL_TELEGRAM, String.valueOf(member.getTelegramChatId()));
+		}
+		if (member.getWhatsappPhoneE164() != null)
+		{
+			return new NotificationTarget(CHANNEL_WHATSAPP, member.getWhatsappPhoneE164());
+		}
+		return null;
 	}
 
 	private String transactionBookedMessage(Document document, String processedByDisplayName)

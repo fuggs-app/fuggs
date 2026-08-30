@@ -66,12 +66,30 @@ class NotificationResourceTest
 	{
 		given()
 			.contentType("application/json")
-			.body(new NotificationResource.NotificationRequest("whatsapp", "+491234", "egal"))
+			.body(new NotificationResource.NotificationRequest("signal", "+491234", "egal"))
 			.when()
 			.post("/api/notifications")
 			.then()
 			.statusCode(400)
 			.body("error", equalTo("unsupported_channel"));
+	}
+
+	@Test
+	void shouldReturnServiceUnavailable_whenWhatsAppIsNotConfigured()
+	{
+		// WireMockTestProfile only configures Telegram; %test.fuggs.whatsapp.
+		// enabled=false is the effective default here, proving the dispatch
+		// wiring for the "whatsapp" case without needing a live Graph API stub
+		// (the actual send call is exercised by WhatsAppWebhookResourceTest).
+		given()
+			.contentType("application/json")
+			.body(new NotificationResource.NotificationRequest("whatsapp", "4917012340001",
+				"Dein Kauflandbeleg wurde gerade bearbeitet."))
+			.when()
+			.post("/api/notifications")
+			.then()
+			.statusCode(503)
+			.body("error", equalTo("whatsapp_unavailable"));
 	}
 
 	@Test

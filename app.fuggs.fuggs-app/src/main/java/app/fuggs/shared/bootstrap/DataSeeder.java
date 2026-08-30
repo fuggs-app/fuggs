@@ -63,6 +63,14 @@ public class DataSeeder
 	Optional<String> devTelegramUsername;
 
 	/**
+	 * WhatsApp phone number to seed onto the demo member "Max Mustermann", so
+	 * the WhatsApp bot can be tested end-to-end in dev. Empty by default. See
+	 * {@link #devTelegramUsername} for why this is {@code Optional<String>}.
+	 */
+	@ConfigProperty(name = "fuggs.bootstrap.whatsapp-phone")
+	Optional<String> devWhatsAppPhone;
+
+	/**
 	 * Seeds demo data for all organizations.
 	 *
 	 * @param orgs
@@ -100,6 +108,14 @@ public class DataSeeder
 				primaryMember.setTelegramUsername(devTelegramUsername.get());
 				LOG.info("Seeded Telegram username onto demo member {}: @{}",
 					primaryMember.getUserName(), primaryMember.getTelegramUsername());
+			}
+			if (devWhatsAppPhone.isPresent() && !devWhatsAppPhone.get().isBlank())
+			{
+				// Overrides the placeholder phone above with the tester's real
+				// number - phone and WhatsApp identity are the same field now.
+				primaryMember.setPhone(devWhatsAppPhone.get());
+				LOG.info("Seeded WhatsApp-capable phone number onto demo member {}: {}",
+					primaryMember.getUserName(), primaryMember.getWhatsappPhoneE164());
 			}
 			Member secondaryMember = createMember("Lisa", "Schmidt", "lisa.schmidt",
 				"lisa.schmidt@harmonie.local", null, org);

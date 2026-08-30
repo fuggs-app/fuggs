@@ -147,6 +147,41 @@ class BotNotificationServiceTest extends BaseOrganizationTest
 	}
 
 	@Test
+	void notifyTransactionBooked_shouldPushViaWhatsApp_whenUploaderHasOnlyAWhatsAppPhone()
+	{
+		Mockito.when(botMessageService.transactionBookedMessage(Mockito.anyString()))
+			.thenReturn("Dein Kauflandbeleg wurde gerade von Maria bearbeitet. Danke, alles erledigt!");
+		Organization org = getOrCreateTestOrganization();
+		createMemberWithWhatsAppPhone("whatsapp_only_member", org, "4917012340009");
+		Document document = documentFor("Kaufland", BigDecimal.TEN, "EUR");
+		document.setUploadedBy("whatsapp_only_member");
+
+		botNotificationService.notifyTransactionBooked(document, "Maria");
+
+		ArgumentCaptor<FuggsBotClient.NotificationRequest> requestCaptor = ArgumentCaptor.forClass(FuggsBotClient.NotificationRequest.class);
+		Mockito.verify(fuggsBotClient).sendNotification(requestCaptor.capture());
+		assertEquals("whatsapp", requestCaptor.getValue().channel());
+		assertEquals("4917012340009", requestCaptor.getValue().recipientId());
+	}
+
+	@Test
+	void notifyTransactionBooked_shouldPreferTelegram_whenUploaderHasBothChannels()
+	{
+		Mockito.when(botMessageService.transactionBookedMessage(Mockito.anyString())).thenReturn("egal");
+		Organization org = getOrCreateTestOrganization();
+		Long memberId = createMemberWithUsername("both_channels_member", org, 55555L);
+		setWhatsAppPhone(memberId, "4917012340010");
+		Document document = documentFor("Kaufland", BigDecimal.TEN, "EUR");
+		document.setUploadedBy("both_channels_member");
+
+		botNotificationService.notifyTransactionBooked(document, "Maria");
+
+		ArgumentCaptor<FuggsBotClient.NotificationRequest> requestCaptor = ArgumentCaptor.forClass(FuggsBotClient.NotificationRequest.class);
+		Mockito.verify(fuggsBotClient).sendNotification(requestCaptor.capture());
+		assertEquals("telegram", requestCaptor.getValue().channel());
+	}
+
+	@Test
 	void notifyTransactionBooked_shouldNotThrow_whenFuggsBotClientFails()
 	{
 		Mockito.when(botMessageService.transactionBookedMessage(Mockito.anyString())).thenReturn("egal");
@@ -178,7 +213,7 @@ class BotNotificationServiceTest extends BaseOrganizationTest
 	}
 
 	@Transactional(Transactional.TxType.REQUIRES_NEW)
-	void createMemberWithUsername(String userName, Organization org, Long telegramChatId)
+	Long createMemberWithUsername(String userName, Organization org, Long telegramChatId)
 	{
 		Member member = new Member();
 		member.setFirstName("Test");
@@ -187,5 +222,24 @@ class BotNotificationServiceTest extends BaseOrganizationTest
 		member.setOrganization(org);
 		member.setTelegramChatId(telegramChatId);
 		memberRepository.persist(member);
+		return member.getId();
+	}
+
+	@Transactional(Transactional.TxType.REQUIRES_NEW)
+	void createMemberWithWhatsAppPhone(String userName, Organization org, String phone)
+	{
+		Member member = new Member();
+		member.setFirstName("Test");
+		member.setLastName("Member");
+		member.setUserName(userName);
+		member.setOrganization(org);
+		member.setPhone(phone);
+		memberRepository.persist(member);
+	}
+
+	@Transactional(Transactional.TxType.REQUIRES_NEW)
+	void setWhatsAppPhone(Long memberId, String phone)
+	{
+		memberRepository.findById(memberId).setPhone(phone);
 	}
 }

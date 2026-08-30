@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import app.fuggs.bot.telegram.TelegramClient;
 import app.fuggs.bot.telegram.TelegramConfig;
 import app.fuggs.bot.telegram.model.SendMessageRequest;
+import app.fuggs.bot.whatsapp.WhatsAppClient;
+import app.fuggs.bot.whatsapp.WhatsAppConfig;
+import app.fuggs.bot.whatsapp.model.WhatsAppSendMessageRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -47,6 +50,7 @@ public class NotificationResource
 	private static final Logger LOG = LoggerFactory.getLogger(NotificationResource.class);
 
 	private static final String CHANNEL_TELEGRAM = "telegram";
+	private static final String CHANNEL_WHATSAPP = "whatsapp";
 
 	@ConfigProperty(name = "fuggs.app.shared-secret")
 	Optional<String> sharedSecret;
@@ -56,6 +60,12 @@ public class NotificationResource
 
 	@RestClient
 	TelegramClient telegramClient;
+
+	@Inject
+	WhatsAppConfig whatsAppConfig;
+
+	@RestClient
+	WhatsAppClient whatsAppClient;
 
 	public record NotificationRequest(String channel, String recipientId, String message)
 	{
@@ -86,6 +96,7 @@ public class NotificationResource
 		return switch (request.channel() == null ? "" : request.channel())
 		{
 			case CHANNEL_TELEGRAM -> sendTelegram(request);
+			case CHANNEL_WHATSAPP -> sendWhatsApp(request);
 			default -> Response.status(Response.Status.BAD_REQUEST)
 				.entity(new ErrorResponse("unsupported_channel"))
 				.build();
@@ -125,6 +136,34 @@ public class NotificationResource
 		catch (Exception e)
 		{
 			LOG.error("Failed to deliver Telegram notification: chatId={}, error={}", chatId, e.getMessage(), e);
+			return Response.status(Response.Status.BAD_GATEWAY)
+				.entity(new ErrorResponse("delivery_failed"))
+				.build();
+		}
+	}
+
+	private Response sendWhatsApp(NotificationRequest request)
+	{
+		if (!whatsAppConfig.isUsable())
+		{
+			LOG.warn("Cannot deliver WhatsApp notification, integration not configured: recipientId={}",
+				request.recipientId());
+			return Response.status(Response.Status.SERVICE_UNAVAILABLE)
+				.entity(new ErrorResponse("whatsapp_unavailable"))
+				.build();
+		}
+
+		try
+		{
+			whatsAppClient.sendMessage(whatsAppConfig.phoneNumberId().orElseThrow(), whatsAppConfig.bearerToken(),
+				new WhatsAppSendMessageRequest(request.recipientId(), request.message()));
+			LOG.info("Delivered notification via WhatsApp: to={}", request.recipientId());
+			return Response.ok().build();
+		}
+		catch (Exception e)
+		{
+			LOG.error("Failed to deliver WhatsApp notification: to={}, error={}", request.recipientId(),
+				e.getMessage(), e);
 			return Response.status(Response.Status.BAD_GATEWAY)
 				.entity(new ErrorResponse("delivery_failed"))
 				.build();
