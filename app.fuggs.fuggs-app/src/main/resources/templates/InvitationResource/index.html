@@ -88,10 +88,18 @@
 
 <div class="page-header">
   <h1>Einladungen</h1>
-  <cds-button href="/einladungen/neu" kind="primary">
-    Neue Einladung
-    <svg slot="icon" viewBox="0 0 32 32" width="16" height="16" fill="currentColor"><path d="M17 15V7h-2v8H7v2h8v8h2v-8h8v-2z"/></svg>
-  </cds-button>
+  <div style="display: flex; gap: var(--cds-spacing-03);">
+    {#if isSuperAdmin}
+    <cds-button href="/einladungen/founder" kind="secondary">
+      Gründer einladen
+      <svg slot="icon" viewBox="0 0 32 32" width="16" height="16" fill="currentColor"><path d="M17 15V7h-2v8H7v2h8v8h2v-8h8v-2z"/></svg>
+    </cds-button>
+    {/if}
+    <cds-button href="/einladungen/neu" kind="primary">
+      Neue Einladung
+      <svg slot="icon" viewBox="0 0 32 32" width="16" height="16" fill="currentColor"><path d="M17 15V7h-2v8H7v2h8v8h2v-8h8v-2z"/></svg>
+    </cds-button>
+  </div>
 </div>
 
 {#if !pendingInvitations.isEmpty}

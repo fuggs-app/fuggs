@@ -62,9 +62,11 @@ public class InvitationResource extends Controller
 		}
 
 		public static native TemplateInstance index(List<Invitation> pendingInvitations,
-			List<Invitation> acceptedInvitations, List<Invitation> expiredInvitations);
+			List<Invitation> acceptedInvitations, List<Invitation> expiredInvitations, boolean isSuperAdmin);
 
 		public static native TemplateInstance create();
+
+		public static native TemplateInstance createFounder();
 	}
 
 	@GET
@@ -80,7 +82,7 @@ public class InvitationResource extends Controller
 		List<Invitation> expired = invitationRepository.findByOrganizationAndStatus(currentOrg,
 			InvitationStatus.EXPIRED);
 
-		return Templates.index(pending, accepted, expired);
+		return Templates.index(pending, accepted, expired, securityIdentity.hasRole(Roles.SUPER_ADMIN));
 	}
 
 	@GET
@@ -147,6 +149,76 @@ public class InvitationResource extends Controller
 		catch (Exception e)
 		{
 			LOG.error("Failed to create invitation: email={}, error={}", email, e.getMessage(), e);
+			flash(FlashKeys.ERROR, "Fehler beim Erstellen der Einladung: " + e.getMessage());
+		}
+
+		redirect(InvitationResource.class).index();
+	}
+
+	/**
+	 * Show form to create a founder invitation (super admin only). Founder
+	 * invitations have no pre-assigned organization — the invitee creates their
+	 * own org during registration.
+	 */
+	@GET
+	@Path("/founder")
+	@RolesAllowed(Roles.SUPER_ADMIN)
+	public TemplateInstance createFounder()
+	{
+		return Templates.createFounder();
+	}
+
+	/**
+	 * Create a founder invitation (super admin only).
+	 */
+	@POST
+	@Path("/founder")
+	@RolesAllowed(Roles.SUPER_ADMIN)
+	@Transactional
+	public void createFounderInvitation(@RestForm String email)
+	{
+		if (validationFailed())
+		{
+			redirect(InvitationResource.class).createFounder();
+			return;
+		}
+
+		Member currentMember = memberRepository.findByUsername(securityIdentity.getPrincipal().getName());
+		if (currentMember == null)
+		{
+			LOG.error("Current member not found: username={}", securityIdentity.getPrincipal().getName());
+			flash(FlashKeys.ERROR, "Fehler: Benutzer nicht gefunden");
+			redirect(InvitationResource.class).index();
+			return;
+		}
+
+		// Check if email already has a pending invitation
+		Invitation existingInvitation = invitationRepository.findPendingByEmail(email);
+		if (existingInvitation != null)
+		{
+			flash(FlashKeys.WARNING, "Es existiert bereits eine ausstehende Einladung für diese E-Mail-Adresse");
+			redirect(InvitationResource.class).index();
+			return;
+		}
+
+		// Check if email already belongs to a member
+		Member existingMember = memberRepository.findByEmail(email);
+		if (existingMember != null)
+		{
+			flash(FlashKeys.ERROR, "Ein Benutzer mit dieser E-Mail-Adresse existiert bereits");
+			redirect(InvitationResource.class).createFounder();
+			return;
+		}
+
+		try
+		{
+			Invitation invitation = invitationService.createFounderInvitation(email, currentMember);
+			LOG.info("Founder invitation created: id={}, email={}", invitation.id, email);
+			flash(FlashKeys.SUCCESS, "Gründer-Einladung erstellt für " + email);
+		}
+		catch (Exception e)
+		{
+			LOG.error("Failed to create founder invitation: email={}, error={}", email, e.getMessage(), e);
 			flash(FlashKeys.ERROR, "Fehler beim Erstellen der Einladung: " + e.getMessage());
 		}
 

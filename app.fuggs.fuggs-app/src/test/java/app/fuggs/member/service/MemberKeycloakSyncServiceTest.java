@@ -12,6 +12,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -43,7 +45,7 @@ class MemberKeycloakSyncServiceTest
 	void shouldSyncMemberWithDefaultRoles()
 	{
 		// Given
-		when(keycloakAdminService.createUser(any(), any(), any(), any(), any()))
+		when(keycloakAdminService.createUser(any(), any(), any(), any(), any(), anyString(), anyBoolean()))
 			.thenReturn("kc-user-123");
 
 		// When
@@ -56,7 +58,9 @@ class MemberKeycloakSyncServiceTest
 			eq("john.doe@example.com"),
 			eq("John"),
 			eq("Doe"),
-			argThat(list -> list.size() == 1 && list.contains("user")));
+			argThat(list -> list.size() == 1 && list.contains("user")),
+			anyString(),
+			anyBoolean());
 	}
 
 	@Test
@@ -64,7 +68,7 @@ class MemberKeycloakSyncServiceTest
 	{
 		// Given
 		List<String> additionalRoles = List.of("admin", "moderator");
-		when(keycloakAdminService.createUser(any(), any(), any(), any(), any()))
+		when(keycloakAdminService.createUser(any(), any(), any(), any(), any(), anyString(), anyBoolean()))
 			.thenReturn("kc-user-456");
 
 		// When
@@ -80,14 +84,16 @@ class MemberKeycloakSyncServiceTest
 			argThat(list -> list.size() == 3
 				&& list.contains("user")
 				&& list.contains("admin")
-				&& list.contains("moderator")));
+				&& list.contains("moderator")),
+			anyString(),
+			anyBoolean());
 	}
 
 	@Test
 	void shouldHandleNullAdditionalRoles()
 	{
 		// Given
-		when(keycloakAdminService.createUser(any(), any(), any(), any(), any()))
+		when(keycloakAdminService.createUser(any(), any(), any(), any(), any(), anyString(), anyBoolean()))
 			.thenReturn("kc-user-789");
 
 		// When
@@ -100,14 +106,16 @@ class MemberKeycloakSyncServiceTest
 			any(),
 			any(),
 			any(),
-			argThat(list -> list.size() == 1 && list.contains("user")));
+			argThat(list -> list.size() == 1 && list.contains("user")),
+			anyString(),
+			anyBoolean());
 	}
 
 	@Test
 	void shouldPassCorrectUserDetailsToKeycloak()
 	{
 		// Given
-		when(keycloakAdminService.createUser(any(), any(), any(), any(), any()))
+		when(keycloakAdminService.createUser(any(), any(), any(), any(), any(), anyString(), anyBoolean()))
 			.thenReturn("kc-user-123");
 
 		// When
@@ -119,7 +127,9 @@ class MemberKeycloakSyncServiceTest
 			eq("john.doe@example.com"), // email
 			eq("John"), // firstName
 			eq("Doe"), // lastName
-			any());
+			any(),
+			anyString(),
+			anyBoolean());
 	}
 
 	@Test
@@ -133,7 +143,7 @@ class MemberKeycloakSyncServiceTest
 		memberWithDifferentUsername.setLastName("Smith");
 		memberWithDifferentUsername.setEmail("jane@example.com");
 
-		when(keycloakAdminService.createUser(any(), any(), any(), any(), any()))
+		when(keycloakAdminService.createUser(any(), any(), any(), any(), any(), anyString(), anyBoolean()))
 			.thenReturn("kc-user-555");
 
 		// When
@@ -145,6 +155,8 @@ class MemberKeycloakSyncServiceTest
 			eq("jane@example.com"), // email
 			eq("Jane"),
 			eq("Smith"),
-			any());
+			any(),
+			anyString(),
+			anyBoolean());
 	}
 }

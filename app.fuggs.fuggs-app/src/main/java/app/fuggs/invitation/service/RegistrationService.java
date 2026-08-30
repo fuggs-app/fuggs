@@ -7,6 +7,7 @@ import app.fuggs.member.repository.MemberRepository;
 import app.fuggs.member.service.KeycloakAdminService;
 import app.fuggs.organization.domain.Organization;
 import app.fuggs.organization.repository.OrganizationRepository;
+import app.fuggs.shared.bootstrap.BootstrapService;
 import app.fuggs.shared.security.Roles;
 import app.fuggs.shared.util.SlugUtil;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -34,6 +35,9 @@ public class RegistrationService
 
 	@Inject
 	KeycloakAdminService keycloakAdminService;
+
+	@Inject
+	BootstrapService bootstrapService;
 
 	/**
 	 * Registers a new founder user with a new organization.
@@ -72,7 +76,7 @@ public class RegistrationService
 
 		// Create Keycloak user with ADMIN and MEMBER roles
 		String keycloakUserId = keycloakAdminService.createUser(member.getUserName(), member.getEmail(),
-			member.getFirstName(), member.getLastName(), List.of(Roles.ADMIN, Roles.MEMBER));
+			member.getFirstName(), member.getLastName(), List.of(Roles.ADMIN, Roles.MEMBER), data.getPassword());
 
 		member.setKeycloakUserId(keycloakUserId);
 		memberRepository.persist(member);
@@ -126,7 +130,7 @@ public class RegistrationService
 
 		// Create Keycloak user
 		String keycloakUserId = keycloakAdminService.createUser(member.getUserName(), member.getEmail(),
-			member.getFirstName(), member.getLastName(), roles);
+			member.getFirstName(), member.getLastName(), roles, data.getPassword());
 
 		member.setKeycloakUserId(keycloakUserId);
 		memberRepository.persist(member);
@@ -161,6 +165,7 @@ public class RegistrationService
 		organization.setActive(true);
 
 		organizationRepository.persist(organization);
+		bootstrapService.ensureRootBommel(organization);
 
 		LOG.info("Organization created: id={}, slug={}, name={}", organization.id, slug, name);
 

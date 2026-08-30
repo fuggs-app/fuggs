@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @ApplicationScoped
 public class MemberKeycloakSyncService
@@ -29,12 +30,17 @@ public class MemberKeycloakSyncService
 		LOG.info("Syncing member to Keycloak: memberId={}, username={}, roles={}",
 			member.getId(), username, roles);
 
+		// Admin-created members get a random temporary password; Keycloak will
+		// prompt them to set a new one on first login.
+		String tempPassword = UUID.randomUUID().toString();
 		String keycloakUserId = keycloakAdminService.createUser(
 			username,
 			member.getEmail(),
 			member.getFirstName(),
 			member.getLastName(),
-			roles);
+			roles,
+			tempPassword,
+			true);
 
 		LOG.info("Member synced to Keycloak: memberId={}, keycloakUserId={}",
 			member.getId(), keycloakUserId);

@@ -81,6 +81,9 @@ public class BootstrapService
 	@ConfigProperty(name = "fuggs.bootstrap.users.admin.organization")
 	String adminOrganization;
 
+	@ConfigProperty(name = "fuggs.bootstrap.users.admin.password", defaultValue = "password")
+	String adminPassword;
+
 	// User 2: Maria config
 	@ConfigProperty(name = "fuggs.bootstrap.users.maria.username")
 	String mariaUsername;
@@ -99,6 +102,9 @@ public class BootstrapService
 
 	@ConfigProperty(name = "fuggs.bootstrap.users.maria.organization")
 	String mariaOrganization;
+
+	@ConfigProperty(name = "fuggs.bootstrap.users.maria.password", defaultValue = "password")
+	String mariaPassword;
 
 	// User 3: Thomas config
 	@ConfigProperty(name = "fuggs.bootstrap.users.thomas.username")
@@ -119,11 +125,14 @@ public class BootstrapService
 	@ConfigProperty(name = "fuggs.bootstrap.users.thomas.organization")
 	String thomasOrganization;
 
+	@ConfigProperty(name = "fuggs.bootstrap.users.thomas.password", defaultValue = "password")
+	String thomasPassword;
+
 	/**
 	 * User configuration record for bootstrapping users.
 	 */
 	private record UserConfig(String username, String email, String firstName, String lastName,
-		List<String> roles, String organizationSlug)
+		List<String> roles, String organizationSlug, String password)
 	{
 	}
 
@@ -162,11 +171,11 @@ public class BootstrapService
 
 		// Create user configs
 		List<UserConfig> users = List.of(new UserConfig(adminUsername, adminEmail, adminFirstName,
-			adminLastName, adminRoles, adminOrganization),
+			adminLastName, adminRoles, adminOrganization, adminPassword),
 			new UserConfig(mariaUsername, mariaEmail, mariaFirstName, mariaLastName, mariaRoles,
-				mariaOrganization),
+				mariaOrganization, mariaPassword),
 			new UserConfig(thomasUsername, thomasEmail, thomasFirstName, thomasLastName, thomasRoles,
-				thomasOrganization));
+				thomasOrganization, thomasPassword));
 
 		// Bootstrap each user
 		for (UserConfig userConfig : users)
@@ -236,7 +245,7 @@ public class BootstrapService
 		try
 		{
 			String newUserId = keycloakAdminService.createUser(config.username(), config.email(),
-				config.firstName(), config.lastName(), config.roles());
+				config.firstName(), config.lastName(), config.roles(), config.password());
 			LOG.info("Created Keycloak user: {} (id: {})", config.username(), newUserId);
 			return newUserId;
 		}
