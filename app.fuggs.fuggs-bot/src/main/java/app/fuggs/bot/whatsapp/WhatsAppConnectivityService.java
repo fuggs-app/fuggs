@@ -13,7 +13,7 @@ import jakarta.inject.Inject;
 /**
  * Verifies on startup that the configured access token and phone number id are
  * valid and the Graph API is reachable, and exposes the same check for
- * on-demand use. Mirrors {@code TelegramConnectivityService}.
+ * on-demand use.
  */
 @ApplicationScoped
 public class WhatsAppConnectivityService

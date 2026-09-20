@@ -4,10 +4,15 @@
 > receipt sent from a WhatsApp test number, document created in Fuggs,
 > LLM-generated reply received). This document originally described a plan
 > where the bot logic lived inside `fuggs-app`'s `DocumentResource`; the
-> actual implementation instead extended the **existing Telegram bot-gateway
-> architecture** (`app.fuggs.fuggs-bot`, built for
-> [`plan-telegram-bot.md`](./plan-telegram-bot.md)) with a second channel.
-> Everything below reflects what was actually built, not the original plan.
+> actual implementation instead extended a **bot-gateway architecture**
+> (`app.fuggs.fuggs-bot`) that was first built for a Telegram channel on a
+> separate branch. Everything below reflects what was actually built for
+> WhatsApp, not the original plan.
+>
+> **Telegram lives on its own branch** (`feature/telegram-bot`), not here -
+> this repository state is WhatsApp-only, per the scope of issue #94. The bot
+> gateway is still structured so re-adding Telegram (or any other channel) is
+> "one more `case`" in the classes below, not a rewrite.
 >
 > **For the Meta/operational setup** (creating the app, the four env vars,
 > the webhook tunnel, and the gotchas we hit getting it running) see
@@ -16,14 +21,13 @@
 
 Goal: a member sends a receipt photo/PDF into a WhatsApp chat with the Fuggs
 bot; it lands in Fuggs as a `Document`, runs through the existing analysis
-flow, and the member gets LLM-written confirmations - the same user story as
-Telegram, on a second channel.
+flow, and the member gets LLM-written confirmations.
 
 ---
 
-## 1. Architecture: a channel added to the existing bot gateway
+## 1. Architecture: a channel added to a reusable bot gateway
 
-Telegram's implementation ([`plan-telegram-bot.md`](./plan-telegram-bot.md))
+A Telegram implementation built earlier (`feature/telegram-bot` branch)
 already established a shape that turned out to need almost no changes to add
 a second channel:
 
@@ -35,8 +39,7 @@ a second channel:
   (`POST /api/bot/documents`, guarded by a shared secret, not
   `@Authenticated` since the caller has no user session). It takes a generic
   `channel` + `senderIdentifier` pair and resolves the member per channel -
-  Telegram by username, WhatsApp by phone number - via one more `case` in
-  `resolveMember`.
+  WhatsApp by phone number today - via one more `case` in `resolveMember`.
 - **`app.fuggs.bot.document.ReceiptIntakeService`** (in fuggs-bot) is
   channel-agnostic: submit bytes, poll fuggs-app for the analysis outcome,
   return a sealed `IntakeOutcome` (`Success`, `AnalysisFailed`,
@@ -48,7 +51,7 @@ a second channel:
   unchanged for WhatsApp.
 
 **What WhatsApp actually added**, all under `app.fuggs.bot.whatsapp` in
-fuggs-bot, mirroring the `app.fuggs.bot.telegram` package:
+fuggs-bot:
 
 | Piece | Purpose |
 |---|---|
@@ -56,7 +59,7 @@ fuggs-bot, mirroring the `app.fuggs.bot.telegram` package:
 | `WhatsAppClient` (`@RegisterRestClient`) | Graph API: get phone number info, resolve a media URL, send a text message |
 | `WhatsAppMediaDownloader` | plain `HttpClient` two-hop media download (bearer-token-protected URL, not a fixed path template) |
 | `WhatsAppWebhookResource` | `/api/whatsapp/webhook` - verify handshake (`GET`), receive + verify + dispatch (`POST`) |
-| `WhatsAppConnectivityService` + dev-only `WhatsAppPingResource` | startup/on-demand credential check, mirrors Telegram's `getMe` |
+| `WhatsAppConnectivityService` + dev-only `WhatsAppPingResource` | startup/on-demand credential check against the Graph API |
 | `model/*` | records for the webhook payload, media, outbound message |
 
 Plus one `case` each in `BotDocumentResource.resolveMember` and
@@ -81,7 +84,7 @@ What actually shipped:
   every request - `phone` stays the single field a Bommelwart sees and edits,
   with its helper text now noting it's also used for the WhatsApp bot.
 - `MemberRepository.findByWhatsAppPhoneE164` is deliberately unscoped, same
-  documented precedent as `findByEmail` / `findByTelegramUsername`.
+  documented precedent as `findByEmail` / `findByKeycloakUserId`.
 - A real normalization gotcha hit during implementation: libphonenumber's
   "default region" only applies when a number has **no** leading `+` - it
   never guesses that such a number might *already* carry a country code.
@@ -92,15 +95,14 @@ What actually shipped:
   Fixed by trying the international (`+`-prefixed) interpretation first,
   falling back to local-format parsing only if that fails.
 
-Multi-org collision handling matches the Telegram precedent: unreachable in
-practice given the unique constraint, but if a lookup ever returned more than
-one row, that's logged and treated as *not found* rather than silently
-picking one.
+Multi-org collision (a member in more than one organization) is out of scope
+per issue #94, and the unique constraint on `whatsapp_phone_e164` makes a
+duplicate match unreachable in practice.
 
-## 3. The webhook (why WhatsApp needed one and Telegram didn't)
+## 3. The webhook
 
-Telegram uses long polling (`getUpdates`), so it needs no public endpoint at
-all. **Meta's Cloud API has no polling transport** - it only ever pushes to a
+A polling-based channel needs no public endpoint at all. **Meta's Cloud API
+has no polling transport, though** - it only ever pushes to a
 subscribed, publicly reachable HTTPS URL, which is why WhatsApp needs a
 webhook and, in dev, a tunnel (`cloudflared`).
 
@@ -136,21 +138,22 @@ README's troubleshooting table.
 
 ## 4. The three acceptance criteria
 
-Identical shape to Telegram - `BotNotificationService` (fuggs-app) generates
-all three via `BotMessageService`, with a static German fallback logged at
-`WARN` if the LLM call fails (a member losing their confirmation is worse
-than one off-brand sentence):
+`BotNotificationService` (fuggs-app) generates all three via
+`BotMessageService`, with a static German fallback logged at `WARN` if the
+LLM call fails (a member losing their confirmation is worse than one
+off-brand sentence):
 
-| AC | Trigger | Channel-specific part |
-|---|---|---|
-| 1 - unknown sender | phone not found via `findByWhatsAppPhoneE164` | none - same `unknownSenderMessage()` as Telegram |
-| 2 - upload ack incl. content | `DocumentAnalysisActivitiesService.completeAnalysis(...)` reached, surfaced via the status-poll response | none |
-| 3 - transaction created | `DocumentResource.createTransactionFromDocument`, after `transactionRepository.persist` | `BotNotificationService.resolveNotificationTarget` now prefers Telegram, falls back to WhatsApp, per member - whichever channel the uploader has |
+| AC | Trigger |
+|---|---|
+| 1 - unknown sender | phone not found via `findByWhatsAppPhoneE164` |
+| 2 - upload ack incl. content | `DocumentAnalysisActivitiesService.completeAnalysis(...)` reached, surfaced via the status-poll response |
+| 3 - transaction created | `DocumentResource.createTransactionFromDocument`, after `transactionRepository.persist`, via `BotNotificationService.resolveNotificationTarget` |
 
-Unlike Telegram, WhatsApp needs no separate "push address" captured from the
-inbound message - the phone number that identifies the sender **is** the
-address used to message them back, so `BotDocumentResource.capturePushAddress`
-stays a no-op for the `"whatsapp"` channel.
+WhatsApp needs no separate "push address" captured from the inbound message -
+the phone number that identifies the sender **is** the address used to
+message them back. `IntakeRequest.pushAddress` stays a reserved, unused field
+for the `"whatsapp"` channel; a channel that can't be reached by its inbound
+identifier alone (e.g. one that needs a numeric chat id) would populate it.
 
 ## 5. The one thing that still isn't free - unchanged from the original plan
 
@@ -179,8 +182,7 @@ it - see the original decision below.
    documented but unbuilt, exactly as originally decided. No config flag was
    added since there was nothing to flag off.
 4. **LLM fallback:** minimal static German text on OpenAI/DeepSeek failure,
-   logged at `WARN` - shipped as originally decided, shared with Telegram via
-   `BotNotificationService`.
+   logged at `WARN` - shipped as originally decided in `BotNotificationService`.
 5. **Schema:** no migration was written -
    `quarkus.hibernate-orm.database.generation=drop-and-create` covers dev/test
    as assumed. Still true: say the word if a database needs to survive a

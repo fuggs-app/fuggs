@@ -17,10 +17,10 @@ import jakarta.ws.rs.core.MediaType;
 /**
  * WhatsApp Cloud (Graph) API client.
  * <p>
- * Unlike Telegram, the credential travels as a bearer token header rather than
- * part of the URL path, so every method takes it as an explicit parameter. Base
- * URL is configured via {@code quarkus.rest-client.whatsapp.url} (Meta's
- * versioned Graph API root) so tests can point it at WireMock.
+ * The credential travels as a bearer token header rather than part of the URL
+ * path, so every method takes it as an explicit parameter. Base URL is
+ * configured via {@code quarkus.rest-client.whatsapp.url} (Meta's versioned
+ * Graph API root) so tests can point it at WireMock.
  * </p>
  */
 @RegisterRestClient(configKey = "whatsapp")

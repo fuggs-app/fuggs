@@ -13,9 +13,8 @@ import jakarta.inject.Inject;
  * Downloads the raw bytes of a media file at the short-lived URL previously
  * resolved via {@link WhatsAppClient#getMediaUrl}. This is plain
  * {@link HttpClient} rather than a declarative REST client because the URL is
- * an arbitrary, fully-qualified location handed to us by Meta (not a fixed path
- * template) - the exact reason {@code TelegramFileDownloader} isn't declarative
- * either.
+ * an arbitrary, fully-qualified location handed to us by Meta, not a fixed path
+ * template.
  */
 @ApplicationScoped
 public class WhatsAppMediaDownloader

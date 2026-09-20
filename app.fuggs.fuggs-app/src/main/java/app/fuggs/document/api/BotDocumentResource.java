@@ -27,10 +27,9 @@ import java.util.Optional;
 
 /**
  * Internal, machine-to-machine document intake shared by every chat bot channel
- * (Telegram and WhatsApp today). Deliberately not a Renarde {@code Controller}
- * and not {@code @Authenticated} - the caller has no user session, only a
- * shared secret. Requests without a matching {@code X-Bot-Secret} header are
- * rejected.
+ * (WhatsApp today). Deliberately not a Renarde {@code Controller} and not
+ * {@code @Authenticated} - the caller has no user session, only a shared
+ * secret. Requests without a matching {@code X-Bot-Secret} header are rejected.
  * <p>
  * Uses a JSON body rather than multipart/form-data. Quarkus's global CSRF
  * filter (`quarkus-rest-csrf`, active application-wide for every POST/PUT/
@@ -41,11 +40,10 @@ import java.util.Optional;
  * </p>
  * <p>
  * Sender resolution is per-{@code channel} ({@link #resolveMember}) because
- * each channel identifies members differently - Telegram by username, WhatsApp
- * by E.164 phone number. Adding a channel means one more {@code case} there
- * plus that channel's own {@code Member} column and repository lookup (see
- * {@link MemberRepository#findByTelegramUsername} /
- * {@link MemberRepository#findByWhatsAppPhoneE164} for the existing precedents)
+ * each channel identifies members differently - WhatsApp by E.164 phone number.
+ * Adding another channel means one more {@code case} there plus that channel's
+ * own {@code Member} column and repository lookup (see
+ * {@link MemberRepository#findByWhatsAppPhoneE164} for the existing precedent)
  * - nothing else in this class changes.
  * </p>
  */
@@ -55,7 +53,6 @@ public class BotDocumentResource
 {
 	private static final Logger LOG = LoggerFactory.getLogger(BotDocumentResource.class);
 
-	private static final String CHANNEL_TELEGRAM = "telegram";
 	private static final String CHANNEL_WHATSAPP = "whatsapp";
 
 	@Inject
@@ -82,13 +79,14 @@ public class BotDocumentResource
 
 	/**
 	 * {@code channel} plus {@code senderIdentifier} is deliberately generic
-	 * rather than e.g. {@code telegramUsername} - see the class Javadoc.
-	 * {@code pushAddress} is separate from {@code senderIdentifier} because the
-	 * two can differ per channel: Telegram cannot message a user by username at
-	 * all, only by the numeric chat id captured here (see
-	 * {@link Member#getTelegramChatId()}), whereas WhatsApp needs no such value
-	 * since its phone number identifier already doubles as the address to
-	 * message back. {@code null} when the channel has nothing to capture.
+	 * rather than tying the shape to one channel's identifier - see the class
+	 * Javadoc. {@code pushAddress} is a reserved extension point: some channels
+	 * (e.g. Telegram, which can't message a user by an inbound identifier alone
+	 * and needs a numeric chat id captured from the message instead) need to
+	 * persist something onto the member to message them back proactively later;
+	 * WhatsApp needs no such value since its phone number identifier already
+	 * doubles as the address to message back. {@code null} when the channel has
+	 * nothing to capture.
 	 */
 	public record IntakeRequest(String channel, String senderIdentifier, String pushAddress, String fileName,
 		String contentType, String fileBase64)
@@ -146,7 +144,9 @@ public class BotDocumentResource
 				.build();
 		}
 
-		capturePushAddress(member, request.channel(), request.pushAddress());
+		// pushAddress is reserved for channels that need it (see the
+		// IntakeRequest Javadoc); WhatsApp doesn't, so there's nothing to
+		// capture onto the member here today.
 
 		byte[] content;
 		try
@@ -196,33 +196,6 @@ public class BotDocumentResource
 	}
 
 	/**
-	 * Persists the channel's proactive-notification address onto the member, if
-	 * the channel provided one and it changed. Currently only
-	 * {@code "telegram"} has anything to capture - see the {@code
-	 * IntakeRequest} Javadoc for why this isn't a generic concept.
-	 */
-	private void capturePushAddress(Member member, String channel, String pushAddress)
-	{
-		if (!CHANNEL_TELEGRAM.equals(channel) || pushAddress == null || pushAddress.isBlank())
-		{
-			return;
-		}
-		try
-		{
-			Long chatId = Long.valueOf(pushAddress);
-			if (!chatId.equals(member.getTelegramChatId()))
-			{
-				member.setTelegramChatId(chatId);
-			}
-		}
-		catch (NumberFormatException e)
-		{
-			LOG.warn("Ignoring non-numeric Telegram pushAddress: member={}, pushAddress={}",
-				member.getUserName(), pushAddress);
-		}
-	}
-
-	/**
 	 * Resolves a sender identifier to a {@code Member}, dispatching on
 	 * {@code channel} since each channel identifies members differently. An
 	 * unrecognized or missing channel resolves to no member, which the caller
@@ -235,7 +208,6 @@ public class BotDocumentResource
 	{
 		return switch (channel == null ? "" : channel)
 		{
-			case CHANNEL_TELEGRAM -> memberRepository.findByTelegramUsername(senderIdentifier);
 			case CHANNEL_WHATSAPP -> memberRepository.findByWhatsAppPhoneE164(senderIdentifier);
 			default -> null;
 		};

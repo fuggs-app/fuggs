@@ -2,7 +2,8 @@ package app.fuggs.bot.document;
 
 /**
  * Result of submitting one attachment to fuggs-app's document/bill pipeline,
- * independent of which channel (Telegram, a future WhatsApp, ...) produced it.
+ * independent of which channel (WhatsApp today, a future second channel, ...)
+ * produced it.
  * <p>
  * Per issue #94, every member-facing message must be LLM-generated - so
  * {@link Success}, {@link AnalysisFailed} and {@link UnknownSender} carry the
@@ -12,7 +13,7 @@ package app.fuggs.bot.document;
  * pure transport/infra conditions - the poll budget ran out, or fuggs-app
  * couldn't be reached at all - so a channel adapter falls back to its own
  * static text for those, consistent with the documented LLM-fallback decision
- * in {@code docs/plan-telegram-bot.md}.
+ * in {@code docs/plan-whatsapp-bot.md}.
  * </p>
  */
 public sealed interface IntakeOutcome

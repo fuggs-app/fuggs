@@ -53,7 +53,7 @@ public class DocumentFileService
 	/**
 	 * Handles a file upload from raw bytes rather than a {@link FileUpload}:
 	 * stores the file in S3 and updates document metadata. Used by intake paths
-	 * that don't go through a multipart form on this service (e.g. the Telegram
+	 * that don't go through a multipart form on this service (e.g. the chat
 	 * bot).
 	 *
 	 * @param document

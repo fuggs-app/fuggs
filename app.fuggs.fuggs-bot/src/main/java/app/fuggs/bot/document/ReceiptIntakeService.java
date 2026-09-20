@@ -12,11 +12,11 @@ import jakarta.ws.rs.WebApplicationException;
 /**
  * Channel-agnostic core of the bot's document intake: submits a downloaded
  * attachment to fuggs-app and waits for the analysis flow to finish, without
- * knowing or caring whether the attachment came from Telegram, a future
- * WhatsApp integration, or anything else.
+ * knowing or caring whether the attachment came from WhatsApp or any other
+ * channel.
  * <p>
- * A channel adapter (e.g. {@code TelegramPoller}) is responsible only for
- * transport - receiving updates, downloading bytes, sending the reply. Per
+ * A channel adapter (e.g. {@code WhatsAppWebhookResource}) is responsible only
+ * for transport - receiving updates, downloading bytes, sending the reply. Per
  * issue #94, every member-facing message must be LLM-generated; fuggs-app owns
  * that generation (it has the business facts), so the {@link IntakeOutcome}
  * this returns already carries ready-to-send text for the cases the AC covers -
@@ -41,16 +41,16 @@ public class ReceiptIntakeService
 	 * analysis flow completes or the poll budget runs out.
 	 *
 	 * @param channel
-	 *            the sending channel's identifier, e.g. {@code "telegram"} -
+	 *            the sending channel's identifier, e.g. {@code "whatsapp"} -
 	 *            must match a case {@code BotDocumentResource} on fuggs-app
 	 *            knows how to resolve to a {@code Member}
 	 * @param senderIdentifier
-	 *            the sender's identity within that channel (a Telegram
-	 *            username, a future WhatsApp E.164 phone number, ...)
+	 *            the sender's identity within that channel (WhatsApp's E.164
+	 *            phone number today)
 	 * @param pushAddress
-	 *            whatever fuggs-app needs to message this sender again later
-	 *            (e.g. Telegram's numeric chat id), or {@code null} if the
-	 *            channel has nothing to capture
+	 *            whatever fuggs-app needs to message this sender again later,
+	 *            or {@code null} if the channel has nothing to capture (true
+	 *            for every channel implemented today)
 	 * @param content
 	 *            the raw file bytes
 	 * @param fileName

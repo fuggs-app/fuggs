@@ -45,17 +45,17 @@ import jakarta.ws.rs.core.Response;
  * Receives WhatsApp Cloud API webhook events and forwards received receipts
  * into the fuggs-app document/bill pipeline via {@link ReceiptIntakeService}.
  * <p>
- * A webhook is used rather than long polling (unlike Telegram) because Meta's
- * Cloud API offers no polling transport - it only ever pushes to a subscribed,
- * publicly reachable HTTPS URL. In dev this requires a tunnel (e.g.
- * {@code cloudflared}); see {@code docs/plan-whatsapp-bot.md}.
+ * A webhook is used rather than long polling because Meta's Cloud API offers no
+ * polling transport - it only ever pushes to a subscribed, publicly reachable
+ * HTTPS URL. In dev this requires a tunnel (e.g. {@code
+ * cloudflared}); see {@code docs/plan-whatsapp-bot.md}.
  * </p>
  * <p>
  * This class only handles WhatsApp transport - verifying the webhook,
  * downloading attachments, sending replies - and WhatsApp-specific wording. The
  * actual submit-and-poll business logic lives in {@link ReceiptIntakeService},
- * which knows nothing about WhatsApp, following the same shape
- * {@code TelegramPoller} established for Telegram.
+ * which knows nothing about WhatsApp - a future second channel would add its
+ * own adapter following this same shape rather than touching that service.
  * </p>
  */
 @Path("/api/whatsapp/webhook")

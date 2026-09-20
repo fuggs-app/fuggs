@@ -13,7 +13,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
 /**
- * Client for fuggs-app's internal Telegram bot intake endpoint
+ * Client for fuggs-app's internal chat bot intake endpoint
  * ({@code BotDocumentResource}). Every call carries the shared secret
  * configured in {@code fuggs.app.shared-secret}, mirroring the check fuggs-app
  * performs on the other end.
@@ -29,7 +29,7 @@ import jakarta.ws.rs.core.MediaType;
 public interface FuggsAppClient
 {
 	/**
-	 * Submits a downloaded Telegram file for intake into the document/bill
+	 * Submits a downloaded chat attachment for intake into the document/bill
 	 * pipeline.
 	 *
 	 * @param request

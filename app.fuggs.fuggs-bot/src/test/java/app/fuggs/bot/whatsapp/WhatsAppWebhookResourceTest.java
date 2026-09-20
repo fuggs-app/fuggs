@@ -28,8 +28,7 @@ import io.restassured.http.ContentType;
 /**
  * Drives real HTTP requests against the webhook endpoint with a stubbed Graph
  * API and a stubbed fuggs-app to prove the full verify-signature-download-
- * forward-reply round trip without touching either live service. Mirrors
- * {@code TelegramPollerTest}.
+ * forward-reply round trip without touching either live service.
  */
 @QuarkusTest
 @TestProfile(WhatsAppWireMockTestProfile.class)

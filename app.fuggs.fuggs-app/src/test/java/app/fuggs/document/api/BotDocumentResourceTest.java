@@ -54,74 +54,8 @@ class BotDocumentResourceTest extends BaseOrganizationTest
 	}
 
 	@Test
-	void shouldIntakeDocumentAndReportStatus_whenTelegramUsernameIsKnown()
-	{
-		createMemberWithTelegramUsername("bommelwart_hugo");
-
-		Number documentId = given()
-			.header("X-Bot-Secret", BotSharedSecretTestProfile.SECRET)
-			.contentType("application/json")
-			.body(new BotDocumentResource.IntakeRequest("telegram", "@Bommelwart_Hugo", null, "Kaufland.pdf",
-				"application/pdf", FILE_BASE64))
-			.when()
-			.post("/api/bot/documents")
-			.then()
-			.log().ifValidationFails()
-			.statusCode(200)
-			.body("documentId", notNullValue())
-			.extract().path("documentId");
-
-		given()
-			.header("X-Bot-Secret", BotSharedSecretTestProfile.SECRET)
-			.when()
-			.get("/api/bot/documents/" + documentId + "/status")
-			.then()
-			.log().ifValidationFails()
-			.statusCode(200)
-			.body("status", notNullValue())
-			.body("complete", notNullValue());
-	}
-
-	@Test
-	void shouldCaptureTelegramChatId_whenPushAddressProvided()
-	{
-		Long memberId = createMemberWithTelegramUsername("chatid_test_member");
-
-		given()
-			.header("X-Bot-Secret", BotSharedSecretTestProfile.SECRET)
-			.contentType("application/json")
-			.body(new BotDocumentResource.IntakeRequest("telegram", "chatid_test_member", "987654",
-				"Kaufland.pdf", "application/pdf", FILE_BASE64))
-			.when()
-			.post("/api/bot/documents")
-			.then()
-			.statusCode(200);
-
-		Member member = memberRepository.findById(memberId);
-		org.junit.jupiter.api.Assertions.assertEquals(987654L, member.getTelegramChatId());
-	}
-
-	@Test
-	void shouldRejectSubmission_whenTelegramUsernameIsUnknown()
-	{
-		given()
-			.header("X-Bot-Secret", BotSharedSecretTestProfile.SECRET)
-			.contentType("application/json")
-			.body(new BotDocumentResource.IntakeRequest("telegram", "nobody_registered", null, "Kaufland.pdf",
-				"application/pdf", FILE_BASE64))
-			.when()
-			.post("/api/bot/documents")
-			.then()
-			.statusCode(404)
-			.body("error", equalTo("unknown_member"))
-			.body("message", equalTo(MOCKED_UNKNOWN_SENDER_MESSAGE));
-	}
-
-	@Test
 	void shouldRejectSubmission_whenChannelIsUnsupported()
 	{
-		createMemberWithTelegramUsername("channel_test_member");
-
 		given()
 			.header("X-Bot-Secret", BotSharedSecretTestProfile.SECRET)
 			.contentType("application/json")
@@ -180,12 +114,12 @@ class BotDocumentResourceTest extends BaseOrganizationTest
 	}
 
 	@Test
-	void shouldNotCaptureAnythingOnMember_whenWhatsAppProvidesAPushAddress()
+	void shouldAcceptSubmission_whenWhatsAppProvidesAnUnusedPushAddress()
 	{
 		// WhatsApp has no separate chat id - the phone number already doubles
-		// as the push address - so a pushAddress here must be a no-op, unlike
-		// the Telegram case above.
-		Long memberId = createMemberWithWhatsAppPhone("4917012340002");
+		// as the push address - so a non-null pushAddress here must be
+		// harmlessly ignored rather than rejected.
+		createMemberWithWhatsAppPhone("4917012340002");
 
 		given()
 			.header("X-Bot-Secret", BotSharedSecretTestProfile.SECRET)
@@ -196,19 +130,16 @@ class BotDocumentResourceTest extends BaseOrganizationTest
 			.post("/api/bot/documents")
 			.then()
 			.statusCode(200);
-
-		Member member = memberRepository.findById(memberId);
-		org.junit.jupiter.api.Assertions.assertNull(member.getTelegramChatId());
 	}
 
 	@Test
 	void shouldRejectSubmission_whenSharedSecretHeaderIsMissing()
 	{
-		createMemberWithTelegramUsername("secret_test_member");
+		createMemberWithWhatsAppPhone("4917012340003");
 
 		given()
 			.contentType("application/json")
-			.body(new BotDocumentResource.IntakeRequest("telegram", "secret_test_member", null, "Kaufland.pdf",
+			.body(new BotDocumentResource.IntakeRequest("whatsapp", "4917012340003", null, "Kaufland.pdf",
 				"application/pdf", FILE_BASE64))
 			.when()
 			.post("/api/bot/documents")
@@ -222,7 +153,7 @@ class BotDocumentResourceTest extends BaseOrganizationTest
 		given()
 			.header("X-Bot-Secret", "not-the-configured-secret")
 			.contentType("application/json")
-			.body(new BotDocumentResource.IntakeRequest("telegram", "irrelevant", null, "Kaufland.pdf",
+			.body(new BotDocumentResource.IntakeRequest("whatsapp", "irrelevant", null, "Kaufland.pdf",
 				"application/pdf", FILE_BASE64))
 			.when()
 			.post("/api/bot/documents")
@@ -239,20 +170,6 @@ class BotDocumentResourceTest extends BaseOrganizationTest
 			.get("/api/bot/documents/1/status")
 			.then()
 			.statusCode(401);
-	}
-
-	@Transactional(Transactional.TxType.REQUIRES_NEW)
-	Long createMemberWithTelegramUsername(String telegramUsername)
-	{
-		Organization org = getOrCreateTestOrganization();
-		Member member = new Member();
-		member.setFirstName("Hugo");
-		member.setLastName("Müller");
-		member.setUserName(telegramUsername + "." + System.nanoTime());
-		member.setTelegramUsername(telegramUsername);
-		member.setOrganization(org);
-		memberRepository.persist(member);
-		return member.getId();
 	}
 
 	@Transactional(Transactional.TxType.REQUIRES_NEW)

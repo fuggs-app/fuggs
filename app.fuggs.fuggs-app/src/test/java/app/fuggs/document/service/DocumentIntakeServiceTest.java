@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Verifies the channel-agnostic intake path that both the web upload controller
- * and the Telegram bot endpoint delegate into.
+ * and the chat bot endpoint delegate into.
  */
 @QuarkusTest
 class DocumentIntakeServiceTest extends BaseOrganizationTest

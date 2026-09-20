@@ -1,9 +1,9 @@
 # fuggs-bot
 
-Chat bot gateway (Telegram, WhatsApp) for uploading receipts into Fuggs. A
-member sends a receipt photo/PDF into a chat, this service forwards it to
-`fuggs-app`'s internal document intake API, and relays the (LLM-generated)
-reply back to the member.
+Chat bot gateway (WhatsApp) for uploading receipts into Fuggs. A member sends
+a receipt photo/PDF into a chat, this service forwards it to `fuggs-app`'s
+internal document intake API, and relays the (LLM-generated) reply back to
+the member.
 
 This service is transport-only: it knows how to receive/send messages on each
 channel, but all business logic (member lookup, document creation, analysis,
@@ -22,25 +22,9 @@ this service calls it for every document submission and status check.
 
 > **_NOTE:_** Dev UI is available at <http://localhost:8104/q/dev/>.
 
----
-
-## Telegram setup
-
-The cheapest channel to set up - no tunnel needed, since it uses long polling.
-
-1. Message **@BotFather** on Telegram → `/newbot` → follow the prompts.
-2. BotFather replies with a token.
-3. Export it and start this service:
-   ```bash
-   export FUGGS_TELEGRAM_BOT_TOKEN=8123456789:AAF...
-   ./mvnw quarkus:dev
-   ```
-4. Add your Telegram `@username` to a member in Fuggs (`/mitglieder` in
-   `fuggs-app`, or `FUGGS_DEV_TELEGRAM_USERNAME` env var on `fuggs-app` to seed
-   it onto the demo member automatically).
-5. Message your bot with a receipt photo/PDF attached.
-
-See `docs/plan-telegram-bot.md` for the full design rationale.
+This gateway is deliberately structured so a second channel is "one more
+`case`" rather than a rewrite - see the architecture note in
+`docs/plan-whatsapp-bot.md` §1 if you're adding one back.
 
 ---
 

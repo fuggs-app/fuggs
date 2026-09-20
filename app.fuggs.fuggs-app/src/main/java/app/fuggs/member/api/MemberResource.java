@@ -92,8 +92,7 @@ public class MemberResource extends Controller
 		@RestForm @NotBlank String firstName,
 		@RestForm @NotBlank String lastName,
 		@RestForm String email,
-		@RestForm String phone,
-		@RestForm String telegramUsername)
+		@RestForm String phone)
 	{
 		if (validationFailed())
 		{
@@ -110,13 +109,6 @@ public class MemberResource extends Controller
 			return;
 		}
 
-		if (telegramUsernameTaken(telegramUsername, null))
-		{
-			flash(FlashKeys.ERROR, "Dieser Telegram-Benutzername ist bereits einem anderen Mitglied zugeordnet");
-			redirect(MemberResource.class).create();
-			return;
-		}
-
 		if (whatsappPhoneTaken(phone, null))
 		{
 			flash(FlashKeys.ERROR,
@@ -130,7 +122,6 @@ public class MemberResource extends Controller
 		member.setLastName(lastName);
 		member.setEmail(email);
 		member.setPhone(phone);
-		member.setTelegramUsername(telegramUsername);
 		member.setOrganization(currentOrg);
 		memberRepository.persist(member);
 
@@ -158,8 +149,7 @@ public class MemberResource extends Controller
 		@RestForm @NotBlank String firstName,
 		@RestForm @NotBlank String lastName,
 		@RestForm String email,
-		@RestForm String phone,
-		@RestForm String telegramUsername)
+		@RestForm String phone)
 	{
 		if (validationFailed())
 		{
@@ -175,13 +165,6 @@ public class MemberResource extends Controller
 			return;
 		}
 
-		if (telegramUsernameTaken(telegramUsername, id))
-		{
-			flash(FlashKeys.ERROR, "Dieser Telegram-Benutzername ist bereits einem anderen Mitglied zugeordnet");
-			redirect(MemberResource.class).detail(id);
-			return;
-		}
-
 		if (whatsappPhoneTaken(phone, id))
 		{
 			flash(FlashKeys.ERROR,
@@ -194,33 +177,16 @@ public class MemberResource extends Controller
 		member.setLastName(lastName);
 		member.setEmail(email);
 		member.setPhone(phone);
-		member.setTelegramUsername(telegramUsername);
 
 		flash(FlashKeys.SUCCESS, "Mitglied aktualisiert");
 		redirect(MemberResource.class).detail(id);
 	}
 
 	/**
-	 * Checks whether the given Telegram username (once normalized) already
-	 * belongs to a different member, to surface a friendly flash message
-	 * instead of a unique-constraint violation on flush.
-	 *
-	 * @param telegramUsername
-	 *            the raw username from the form
-	 * @param excludeMemberId
-	 *            the member being edited, excluded from the collision check
-	 *            ({@code null} when creating a new member)
-	 */
-	private boolean telegramUsernameTaken(String telegramUsername, Long excludeMemberId)
-	{
-		Member existing = memberRepository.findByTelegramUsername(telegramUsername);
-		return existing != null && !existing.getId().equals(excludeMemberId);
-	}
-
-	/**
 	 * Checks whether the given phone number (once normalized to E.164, the same
-	 * as WhatsApp identifies senders) already belongs to a different member,
-	 * mirroring {@link #telegramUsernameTaken}.
+	 * as WhatsApp identifies senders) already belongs to a different member, to
+	 * surface a friendly flash message instead of a unique-constraint violation
+	 * on flush.
 	 *
 	 * @param phone
 	 *            the raw phone number from the form

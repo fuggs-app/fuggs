@@ -31,7 +31,6 @@ public class BotNotificationService
 {
 	private static final Logger LOG = LoggerFactory.getLogger(BotNotificationService.class);
 
-	private static final String CHANNEL_TELEGRAM = "telegram";
 	private static final String CHANNEL_WHATSAPP = "whatsapp";
 
 	private static final String UNKNOWN_SENDER_FALLBACK = "Wir konnten dein Konto bei Fuggs nicht finden, "
@@ -149,16 +148,12 @@ public class BotNotificationService
 	}
 
 	/**
-	 * Picks which channel to push a proactive notification through, preferring
-	 * Telegram when a member has both - arbitrary but stable, since a member
-	 * only ever has both during a transition between channels.
+	 * Picks which channel to push a proactive notification through. Only
+	 * WhatsApp exists today; a future second channel would add its own check
+	 * here, in the same preference-order shape.
 	 */
 	private NotificationTarget resolveNotificationTarget(Member member)
 	{
-		if (member.getTelegramChatId() != null)
-		{
-			return new NotificationTarget(CHANNEL_TELEGRAM, String.valueOf(member.getTelegramChatId()));
-		}
 		if (member.getWhatsappPhoneE164() != null)
 		{
 			return new NotificationTarget(CHANNEL_WHATSAPP, member.getWhatsappPhoneE164());

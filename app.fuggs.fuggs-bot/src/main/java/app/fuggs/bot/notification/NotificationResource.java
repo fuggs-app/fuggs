@@ -7,9 +7,6 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import app.fuggs.bot.telegram.TelegramClient;
-import app.fuggs.bot.telegram.TelegramConfig;
-import app.fuggs.bot.telegram.model.SendMessageRequest;
 import app.fuggs.bot.whatsapp.WhatsAppClient;
 import app.fuggs.bot.whatsapp.WhatsAppConfig;
 import app.fuggs.bot.whatsapp.model.WhatsAppSendMessageRequest;
@@ -49,17 +46,10 @@ public class NotificationResource
 {
 	private static final Logger LOG = LoggerFactory.getLogger(NotificationResource.class);
 
-	private static final String CHANNEL_TELEGRAM = "telegram";
 	private static final String CHANNEL_WHATSAPP = "whatsapp";
 
 	@ConfigProperty(name = "fuggs.app.shared-secret")
 	Optional<String> sharedSecret;
-
-	@Inject
-	TelegramConfig telegramConfig;
-
-	@RestClient
-	TelegramClient telegramClient;
 
 	@Inject
 	WhatsAppConfig whatsAppConfig;
@@ -95,51 +85,11 @@ public class NotificationResource
 
 		return switch (request.channel() == null ? "" : request.channel())
 		{
-			case CHANNEL_TELEGRAM -> sendTelegram(request);
 			case CHANNEL_WHATSAPP -> sendWhatsApp(request);
 			default -> Response.status(Response.Status.BAD_REQUEST)
 				.entity(new ErrorResponse("unsupported_channel"))
 				.build();
 		};
-	}
-
-	private Response sendTelegram(NotificationRequest request)
-	{
-		Long chatId;
-		try
-		{
-			chatId = Long.valueOf(request.recipientId());
-		}
-		catch (NumberFormatException e)
-		{
-			LOG.warn("Rejected notification with non-numeric Telegram recipientId: {}", request.recipientId());
-			return Response.status(Response.Status.BAD_REQUEST)
-				.entity(new ErrorResponse("invalid_recipient"))
-				.build();
-		}
-
-		Optional<String> botToken = telegramConfig.botToken().filter(t -> !t.isBlank());
-		if (botToken.isEmpty())
-		{
-			LOG.warn("Cannot deliver Telegram notification, no bot token configured: chatId={}", chatId);
-			return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-				.entity(new ErrorResponse("telegram_unavailable"))
-				.build();
-		}
-
-		try
-		{
-			telegramClient.sendMessage(botToken.get(), new SendMessageRequest(chatId, request.message()));
-			LOG.info("Delivered notification via Telegram: chatId={}", chatId);
-			return Response.ok().build();
-		}
-		catch (Exception e)
-		{
-			LOG.error("Failed to deliver Telegram notification: chatId={}, error={}", chatId, e.getMessage(), e);
-			return Response.status(Response.Status.BAD_GATEWAY)
-				.entity(new ErrorResponse("delivery_failed"))
-				.build();
-		}
 	}
 
 	private Response sendWhatsApp(NotificationRequest request)

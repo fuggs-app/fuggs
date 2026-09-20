@@ -103,12 +103,12 @@ class BotNotificationServiceTest extends BaseOrganizationTest
 	}
 
 	@Test
-	void notifyTransactionBooked_shouldSkip_whenUploaderHasNoTelegramChatId()
+	void notifyTransactionBooked_shouldSkip_whenUploaderHasNoReachableChannel()
 	{
 		Organization org = getOrCreateTestOrganization();
-		createMemberWithUsername("no_chat_id_member", org, null);
+		createMemberWithUsername("no_channel_member", org);
 		Document document = documentFor("Kaufland", BigDecimal.TEN, "EUR");
-		document.setUploadedBy("no_chat_id_member");
+		document.setUploadedBy("no_channel_member");
 
 		botNotificationService.notifyTransactionBooked(document, "Maria");
 
@@ -124,26 +124,6 @@ class BotNotificationServiceTest extends BaseOrganizationTest
 		botNotificationService.notifyTransactionBooked(document, "Maria");
 
 		Mockito.verifyNoInteractions(fuggsBotClient);
-	}
-
-	@Test
-	void notifyTransactionBooked_shouldPushViaTelegram_whenUploaderHasChatId()
-	{
-		Mockito.when(botMessageService.transactionBookedMessage(Mockito.anyString()))
-			.thenReturn("Dein Kauflandbeleg wurde gerade von Maria bearbeitet. Danke, alles erledigt!");
-		Organization org = getOrCreateTestOrganization();
-		createMemberWithUsername("chat_id_member", org, 42424242L);
-		Document document = documentFor("Kaufland", BigDecimal.TEN, "EUR");
-		document.setUploadedBy("chat_id_member");
-
-		botNotificationService.notifyTransactionBooked(document, "Maria");
-
-		ArgumentCaptor<FuggsBotClient.NotificationRequest> requestCaptor = ArgumentCaptor.forClass(FuggsBotClient.NotificationRequest.class);
-		Mockito.verify(fuggsBotClient).sendNotification(requestCaptor.capture());
-		assertEquals("telegram", requestCaptor.getValue().channel());
-		assertEquals("42424242", requestCaptor.getValue().recipientId());
-		assertThat(requestCaptor.getValue().message(), equalTo(
-			"Dein Kauflandbeleg wurde gerade von Maria bearbeitet. Danke, alles erledigt!"));
 	}
 
 	@Test
@@ -165,30 +145,13 @@ class BotNotificationServiceTest extends BaseOrganizationTest
 	}
 
 	@Test
-	void notifyTransactionBooked_shouldPreferTelegram_whenUploaderHasBothChannels()
-	{
-		Mockito.when(botMessageService.transactionBookedMessage(Mockito.anyString())).thenReturn("egal");
-		Organization org = getOrCreateTestOrganization();
-		Long memberId = createMemberWithUsername("both_channels_member", org, 55555L);
-		setWhatsAppPhone(memberId, "4917012340010");
-		Document document = documentFor("Kaufland", BigDecimal.TEN, "EUR");
-		document.setUploadedBy("both_channels_member");
-
-		botNotificationService.notifyTransactionBooked(document, "Maria");
-
-		ArgumentCaptor<FuggsBotClient.NotificationRequest> requestCaptor = ArgumentCaptor.forClass(FuggsBotClient.NotificationRequest.class);
-		Mockito.verify(fuggsBotClient).sendNotification(requestCaptor.capture());
-		assertEquals("telegram", requestCaptor.getValue().channel());
-	}
-
-	@Test
 	void notifyTransactionBooked_shouldNotThrow_whenFuggsBotClientFails()
 	{
 		Mockito.when(botMessageService.transactionBookedMessage(Mockito.anyString())).thenReturn("egal");
 		Mockito.doThrow(new RuntimeException("fuggs-bot unreachable")).when(fuggsBotClient)
 			.sendNotification(Mockito.any());
 		Organization org = getOrCreateTestOrganization();
-		createMemberWithUsername("unreachable_bot_member", org, 1L);
+		createMemberWithWhatsAppPhone("unreachable_bot_member", org, "4917012340099");
 		Document document = documentFor("Kaufland", BigDecimal.TEN, "EUR");
 		document.setUploadedBy("unreachable_bot_member");
 
@@ -213,14 +176,13 @@ class BotNotificationServiceTest extends BaseOrganizationTest
 	}
 
 	@Transactional(Transactional.TxType.REQUIRES_NEW)
-	Long createMemberWithUsername(String userName, Organization org, Long telegramChatId)
+	Long createMemberWithUsername(String userName, Organization org)
 	{
 		Member member = new Member();
 		member.setFirstName("Test");
 		member.setLastName("Member");
 		member.setUserName(userName);
 		member.setOrganization(org);
-		member.setTelegramChatId(telegramChatId);
 		memberRepository.persist(member);
 		return member.getId();
 	}
@@ -235,11 +197,5 @@ class BotNotificationServiceTest extends BaseOrganizationTest
 		member.setOrganization(org);
 		member.setPhone(phone);
 		memberRepository.persist(member);
-	}
-
-	@Transactional(Transactional.TxType.REQUIRES_NEW)
-	void setWhatsAppPhone(Long memberId, String phone)
-	{
-		memberRepository.findById(memberId).setPhone(phone);
 	}
 }

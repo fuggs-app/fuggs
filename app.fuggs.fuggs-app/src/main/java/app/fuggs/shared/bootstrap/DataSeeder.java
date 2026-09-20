@@ -50,22 +50,14 @@ public class DataSeeder
 	TransactionRecordRepository transactionRepository;
 
 	/**
-	 * Telegram username to seed onto the demo member "Max Mustermann", so the
-	 * Telegram bot can be tested end-to-end in dev. Empty by default.
+	 * WhatsApp phone number to seed onto the demo member "Max Mustermann", so
+	 * the WhatsApp bot can be tested end-to-end in dev. Empty by default.
 	 * <p>
 	 * {@code Optional<String>} rather than a plain {@code String} - Quarkus's
 	 * built-in converter treats an empty-string config value as "absent" and
 	 * fails eager validation of a non-optional {@code String} property, which
 	 * would otherwise break application startup whenever the property is unset
 	 * (the default).
-	 */
-	@ConfigProperty(name = "fuggs.bootstrap.telegram-username")
-	Optional<String> devTelegramUsername;
-
-	/**
-	 * WhatsApp phone number to seed onto the demo member "Max Mustermann", so
-	 * the WhatsApp bot can be tested end-to-end in dev. Empty by default. See
-	 * {@link #devTelegramUsername} for why this is {@code Optional<String>}.
 	 */
 	@ConfigProperty(name = "fuggs.bootstrap.whatsapp-phone")
 	Optional<String> devWhatsAppPhone;
@@ -103,12 +95,6 @@ public class DataSeeder
 			// Create demo members (NOT auth-linked)
 			Member primaryMember = createMember("Max", "Mustermann", "max.mustermann",
 				"max.mustermann@harmonie.local", "+49 89 123456", org);
-			if (devTelegramUsername.isPresent() && !devTelegramUsername.get().isBlank())
-			{
-				primaryMember.setTelegramUsername(devTelegramUsername.get());
-				LOG.info("Seeded Telegram username onto demo member {}: @{}",
-					primaryMember.getUserName(), primaryMember.getTelegramUsername());
-			}
 			if (devWhatsAppPhone.isPresent() && !devWhatsAppPhone.get().isBlank())
 			{
 				// Overrides the placeholder phone above with the tester's real

@@ -12,8 +12,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Dev-only endpoint to verify the WhatsApp connection on demand. Mirrors
- * {@code TelegramPingResource}.
+ * Dev-only endpoint to verify the WhatsApp connection on demand.
  * <p>
  * Deliberately unauthenticated and restricted to the dev profile so it never
  * exists in a production build.

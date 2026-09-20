@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 /**
  * Channel-agnostic document intake: creates a {@link Document} from raw file
  * bytes and triggers analysis, without depending on an authenticated request or
- * session. Used by both the web upload controller and the Telegram bot intake
+ * session. Used by both the web upload controller and the chat bot intake
  * endpoint.
  */
 @ApplicationScoped
