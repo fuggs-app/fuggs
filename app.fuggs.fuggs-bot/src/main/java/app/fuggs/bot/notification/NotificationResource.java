@@ -1,5 +1,7 @@
 package app.fuggs.bot.notification;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Optional;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -10,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import app.fuggs.bot.whatsapp.WhatsAppClient;
 import app.fuggs.bot.whatsapp.WhatsAppConfig;
 import app.fuggs.bot.whatsapp.model.WhatsAppSendMessageRequest;
+import io.quarkus.runtime.LaunchMode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -120,10 +123,24 @@ public class NotificationResource
 		}
 	}
 
+	/**
+	 * Compares the provided header against the configured shared secret, using
+	 * a constant-time comparison. An unset secret is only treated as a match in
+	 * {@code dev}/{@code test} launch modes, so local dev works without
+	 * exporting {@code FUGGS_BOT_SHARED_SECRET} - everywhere else this endpoint
+	 * fails closed instead of silently accepting unauthenticated requests,
+	 * matching {@code WhatsAppWebhookResource}'s signature check.
+	 */
 	private boolean isAuthorized(String secret)
 	{
 		String expected = sharedSecret.orElse("");
+		if (expected.isBlank())
+		{
+			LaunchMode mode = LaunchMode.current();
+			return mode == LaunchMode.DEVELOPMENT || mode == LaunchMode.TEST;
+		}
 		String provided = secret == null ? "" : secret;
-		return expected.equals(provided);
+		return MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8),
+			provided.getBytes(StandardCharsets.UTF_8));
 	}
 }

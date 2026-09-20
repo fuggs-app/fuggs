@@ -6,6 +6,7 @@ import app.fuggs.document.service.DocumentIntakeService;
 import app.fuggs.member.domain.Member;
 import app.fuggs.member.repository.MemberRepository;
 import app.fuggs.messaging.BotNotificationService;
+import io.quarkus.runtime.LaunchMode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -22,6 +23,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -214,16 +217,25 @@ public class BotDocumentResource
 	}
 
 	/**
-	 * Compares the provided header against the configured shared secret.
-	 * Blank/unset on both sides is treated as a match, so a local dev setup
-	 * with no {@code FUGGS_BOT_SHARED_SECRET} exported on either service still
-	 * works; setting it on both sides locks the endpoint down.
+	 * Compares the provided header against the configured shared secret, using
+	 * a constant-time comparison. An unset secret is only treated as a match in
+	 * {@code dev}/{@code test} launch modes, so local dev works without
+	 * exporting {@code FUGGS_BOT_SHARED_SECRET} - everywhere else (i.e. a real
+	 * deployment where the operator forgot to set it) this endpoint fails
+	 * closed instead of silently accepting unauthenticated requests, matching
+	 * {@code WhatsAppWebhookResource}'s signature check on the other service.
 	 */
 	private boolean isAuthorized(String secret)
 	{
 		String expected = sharedSecret.orElse("");
+		if (expected.isBlank())
+		{
+			LaunchMode mode = LaunchMode.current();
+			return mode == LaunchMode.DEVELOPMENT || mode == LaunchMode.TEST;
+		}
 		String provided = secret == null ? "" : secret;
-		return expected.equals(provided);
+		return MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8),
+			provided.getBytes(StandardCharsets.UTF_8));
 	}
 
 	private Response unauthorized()
