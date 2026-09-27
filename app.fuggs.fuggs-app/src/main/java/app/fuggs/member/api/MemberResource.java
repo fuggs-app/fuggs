@@ -109,6 +109,14 @@ public class MemberResource extends Controller
 			return;
 		}
 
+		if (whatsappPhoneTaken(phone, null))
+		{
+			flash(FlashKeys.ERROR,
+				"Diese Telefonnummer ist bereits als WhatsApp-Nummer einem anderen Mitglied zugeordnet");
+			redirect(MemberResource.class).create();
+			return;
+		}
+
 		Member member = new Member();
 		member.setFirstName(firstName);
 		member.setLastName(lastName);
@@ -157,6 +165,14 @@ public class MemberResource extends Controller
 			return;
 		}
 
+		if (whatsappPhoneTaken(phone, id))
+		{
+			flash(FlashKeys.ERROR,
+				"Diese Telefonnummer ist bereits als WhatsApp-Nummer einem anderen Mitglied zugeordnet");
+			redirect(MemberResource.class).detail(id);
+			return;
+		}
+
 		member.setFirstName(firstName);
 		member.setLastName(lastName);
 		member.setEmail(email);
@@ -164,6 +180,24 @@ public class MemberResource extends Controller
 
 		flash(FlashKeys.SUCCESS, "Mitglied aktualisiert");
 		redirect(MemberResource.class).detail(id);
+	}
+
+	/**
+	 * Checks whether the given phone number (once normalized to E.164, the same
+	 * as WhatsApp identifies senders) already belongs to a different member, to
+	 * surface a friendly flash message instead of a unique-constraint violation
+	 * on flush.
+	 *
+	 * @param phone
+	 *            the raw phone number from the form
+	 * @param excludeMemberId
+	 *            the member being edited, excluded from the collision check
+	 *            ({@code null} when creating a new member)
+	 */
+	private boolean whatsappPhoneTaken(String phone, Long excludeMemberId)
+	{
+		Member existing = memberRepository.findByWhatsAppPhoneE164(phone);
+		return existing != null && !existing.getId().equals(excludeMemberId);
 	}
 
 	@POST

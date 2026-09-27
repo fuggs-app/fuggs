@@ -8,10 +8,15 @@ import app.fuggs.document.domain.DocumentStatus;
 import app.fuggs.document.domain.DocumentTag;
 import app.fuggs.document.domain.TagSource;
 import app.fuggs.document.domain.TradeParty;
+import app.fuggs.document.flow.DocumentAnalysisActivitiesService;
 import app.fuggs.document.repository.DocumentRepository;
 import app.fuggs.document.service.DocumentAnalysisService;
 import app.fuggs.document.service.DocumentDataService;
 import app.fuggs.document.service.DocumentFileService;
+import app.fuggs.document.service.DocumentIntakeService;
+import app.fuggs.member.domain.Member;
+import app.fuggs.member.repository.MemberRepository;
+import app.fuggs.messaging.BotNotificationService;
 import app.fuggs.organization.domain.Organization;
 import app.fuggs.shared.security.OrganizationContext;
 import app.fuggs.shared.util.FlashKeys;
@@ -37,7 +42,9 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
@@ -74,10 +81,19 @@ public class DocumentResource extends Controller
 	DocumentDataService dataService;
 
 	@Inject
+    DocumentIntakeService intakeService;
+
+	@Inject
 	OrganizationContext organizationContext;
 
 	@Inject
-	app.fuggs.document.flow.DocumentAnalysisActivitiesService activitiesService;
+    DocumentAnalysisActivitiesService activitiesService;
+
+	@Inject
+	MemberRepository memberRepository;
+
+	@Inject
+	BotNotificationService botNotificationService;
 
 	@CheckedTemplate
 	public static class Templates
@@ -268,7 +284,6 @@ public class DocumentResource extends Controller
 		redirect(DocumentResource.class).review(documentId);
 	}
 
-	@Transactional(Transactional.TxType.REQUIRES_NEW)
 	Long createAndPersistDocument(FileUpload file)
 	{
 		// Get current organization
@@ -278,26 +293,18 @@ public class DocumentResource extends Controller
 			throw new IllegalStateException("Organization not found");
 		}
 
-		Document document = new Document();
-		document.setTotal(java.math.BigDecimal.ZERO);
-		// Placeholder will be filled by AI
-		document.setCurrencyCode("EUR");
-		document.setAnalysisStatus(AnalysisStatus.PENDING);
-		document.setDocumentStatus(DocumentStatus.UPLOADED);
-		document.setUploadedBy(securityIdentity.getPrincipal().getName());
-		document.setOrganization(currentOrg);
-
-		handleFileUpload(document, file);
-		documentRepository.persist(document);
-
-		// Trigger AI analysis workflow (auto-start as per user preference)
-		boolean analysisStarted = triggerDocumentAnalysis(document);
-
-		if (!analysisStarted)
+		byte[] content;
+		try
 		{
-			analysisService.markAnalysisFailed(document,
-				KI_DIENST_NICHT_VERFÜGBAR_BITTE_FÜLLEN_SIE_DIE_FELDER_MANUELL_AUS);
+			content = Files.readAllBytes(file.uploadedFile());
 		}
+		catch (IOException e)
+		{
+			throw new RuntimeException("Fehler beim Lesen der hochgeladenen Datei", e);
+		}
+
+		Document document = intakeService.intake(currentOrg, securityIdentity.getPrincipal().getName(),
+			content, file.fileName(), file.contentType());
 
 		return document.getId();
 	}
@@ -822,6 +829,12 @@ public class DocumentResource extends Controller
 
 		LOG.info("Transaction created from document: documentId={}, transactionId={}",
 			document.getId(), transaction.getId());
+
+		// AC #94.3: tell the original bot uploader their receipt is booked.
+		// Best-effort - never allowed to fail the booking itself.
+		Member processedBy = memberRepository.findByUsername(securityIdentity.getPrincipal().getName());
+		botNotificationService.notifyTransactionBooked(document,
+			processedBy != null ? processedBy.getDisplayName() : null);
 		flash(FlashKeys.SUCCESS, "Transaktion erstellt aus Beleg \"" + document.getDisplayName() + "\"");
 		redirect(app.fuggs.transaction.api.TransactionResource.class).show(transaction.getId());
 	}

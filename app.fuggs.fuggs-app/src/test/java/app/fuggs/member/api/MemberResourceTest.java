@@ -19,6 +19,7 @@ import org.mockito.Mockito;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @QuarkusTest
 class MemberResourceTest extends BaseOrganizationTest
@@ -122,7 +123,26 @@ class MemberResourceTest extends BaseOrganizationTest
 			.statusCode(200)
 			.body(containsString("Neues Mitglied"))
 			.body(containsString("Vorname"))
-			.body(containsString("Nachname"));
+			.body(containsString("Nachname"))
+			.body(containsString("WhatsApp-Bot"));
+	}
+
+	@Test
+	@TestSecurity(user = "bob", roles = "user")
+	void shouldDeriveWhatsAppPhoneFromPhoneFieldAndShowItOnDetailPage()
+	{
+		deleteAllData();
+		Long memberId = createMember("Hugo", "Müller", null, "0170 1234567");
+
+		given()
+			.when()
+			.get("/mitglieder/" + memberId)
+			.then()
+			.statusCode(200)
+			.body(containsString("WhatsApp-Bot"))
+			.body(containsString("0170 1234567"));
+
+		assertEquals("491701234567", memberRepository.findById(memberId).getWhatsappPhoneE164());
 	}
 
 	@Test

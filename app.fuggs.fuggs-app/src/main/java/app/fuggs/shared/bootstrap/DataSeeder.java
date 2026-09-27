@@ -5,7 +5,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,19 @@ public class DataSeeder
 	TransactionRecordRepository transactionRepository;
 
 	/**
+	 * WhatsApp phone number to seed onto the demo member "Max Mustermann", so
+	 * the WhatsApp bot can be tested end-to-end in dev. Empty by default.
+	 * <p>
+	 * {@code Optional<String>} rather than a plain {@code String} - Quarkus's
+	 * built-in converter treats an empty-string config value as "absent" and
+	 * fails eager validation of a non-optional {@code String} property, which
+	 * would otherwise break application startup whenever the property is unset
+	 * (the default).
+	 */
+	@ConfigProperty(name = "fuggs.bootstrap.whatsapp-phone")
+	Optional<String> devWhatsAppPhone;
+
+	/**
 	 * Seeds demo data for all organizations.
 	 *
 	 * @param orgs
@@ -78,8 +93,16 @@ public class DataSeeder
 		if (memberRepository.findByUsername("max.mustermann") == null)
 		{
 			// Create demo members (NOT auth-linked)
-			createMember("Max", "Mustermann", "max.mustermann",
+			Member primaryMember = createMember("Max", "Mustermann", "max.mustermann",
 				"max.mustermann@harmonie.local", "+49 89 123456", org);
+			if (devWhatsAppPhone.isPresent() && !devWhatsAppPhone.get().isBlank())
+			{
+				// Overrides the placeholder phone above with the tester's real
+				// number - phone and WhatsApp identity are the same field now.
+				primaryMember.setPhone(devWhatsAppPhone.get());
+				LOG.info("Seeded WhatsApp-capable phone number onto demo member {}: {}",
+					primaryMember.getUserName(), primaryMember.getWhatsappPhoneE164());
+			}
 			Member secondaryMember = createMember("Lisa", "Schmidt", "lisa.schmidt",
 				"lisa.schmidt@harmonie.local", null, org);
 
