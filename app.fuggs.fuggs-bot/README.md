@@ -194,5 +194,4 @@ should appear at `http://localhost:8080/belege`.
 | Access token suddenly stops working after ~24h | Temporary token expired - regenerate, or switch to a permanent System User token (see step 2) |
 
 See `docs/plan-whatsapp-bot.md` for the full design rationale, including why
-templates/paid messaging outside the 24h window are intentionally
-unimplemented.
+template messaging was never built despite the 24h free-form window.

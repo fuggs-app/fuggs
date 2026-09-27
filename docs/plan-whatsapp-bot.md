@@ -2,16 +2,10 @@
 
 > **Status: implemented**, dev-tested end-to-end (webhook verified, real
 > receipt sent from a WhatsApp test number, document created in Fuggs,
-> LLM-generated reply received). This document originally described a plan
-> where the bot logic lived inside `fuggs-app`'s `DocumentResource`; the
-> actual implementation instead extended a **bot-gateway architecture**
-> (`app.fuggs.fuggs-bot`) that was first built for a Telegram channel on a
-> separate branch. Everything below reflects what was actually built for
-> WhatsApp, not the original plan.
+> LLM-generated reply received).
 >
-> **Telegram lives on its own branch** (`feature/telegram-bot`), not here -
-> this repository state is WhatsApp-only, per the scope of issue #94. The bot
-> gateway is still structured so re-adding Telegram (or any other channel) is
+> This repository state is WhatsApp-only, per the scope of issue #94. The bot
+> gateway (`app.fuggs.fuggs-bot`) is structured so adding another channel is
 > "one more `case`" in the classes below, not a rewrite.
 >
 > **For the Meta/operational setup** (creating the app, the four env vars,
@@ -27,10 +21,6 @@ flow, and the member gets LLM-written confirmations.
 
 ## 1. Architecture: a channel added to a reusable bot gateway
 
-A Telegram implementation built earlier (`feature/telegram-bot` branch)
-already established a shape that turned out to need almost no changes to add
-a second channel:
-
 - **`app.fuggs.fuggs-bot`** is a separate microservice (its own Quarkus app,
   port 8104), not code inside `fuggs-app`. It owns transport only - receiving
   updates, downloading attachments, sending replies - for each channel.
@@ -43,15 +33,12 @@ a second channel:
 - **`app.fuggs.bot.document.ReceiptIntakeService`** (in fuggs-bot) is
   channel-agnostic: submit bytes, poll fuggs-app for the analysis outcome,
   return a sealed `IntakeOutcome` (`Success`, `AnalysisFailed`,
-  `UnknownSender`, `StillProcessing`, `SubmissionFailed`). Neither this nor
-  `BotDocumentResource` needed a single change for WhatsApp.
+  `UnknownSender`, `StillProcessing`, `SubmissionFailed`).
 - **`app.fuggs.messaging.BotMessageService`** (fuggs-app, `@RegisterAiService`
   over DeepSeek) generates every member-facing sentence, per issue #94's
-  "keine statischen vorgefertigten Strings" requirement. Channel-agnostic,
-  unchanged for WhatsApp.
+  "keine statischen vorgefertigten Strings" requirement. Channel-agnostic.
 
-**What WhatsApp actually added**, all under `app.fuggs.bot.whatsapp` in
-fuggs-bot:
+**What WhatsApp adds**, all under `app.fuggs.bot.whatsapp` in fuggs-bot:
 
 | Piece | Purpose |
 |---|---|
@@ -67,13 +54,9 @@ Plus one `case` each in `BotDocumentResource.resolveMember` and
 
 ## 2. Member identification: WhatsApp phone reuses `Member.phone`
 
-The original plan proposed a new `Member.phoneE164` column, separate from the
-existing free-text `phone` field. **That turned out to be unnecessary** - a
-WhatsApp number and a member's general contact phone number are the same
+A WhatsApp number and a member's general contact phone number are the same
 real-world number in the overwhelming majority of cases, so there's no reason
 to make a Bommelwart type it twice.
-
-What actually shipped:
 
 - `Member.setPhone(String)` derives `whatsappPhoneE164` (E.164, no leading
   `+`, matching how WhatsApp identifies senders) as a side effect, using
@@ -82,18 +65,18 @@ What actually shipped:
 - `whatsappPhoneE164` is a separate, indexed, unique **column** (not shown in
   any form) purely so lookups don't need to normalize the whole table on
   every request - `phone` stays the single field a Bommelwart sees and edits,
-  with its helper text now noting it's also used for the WhatsApp bot.
+  with its helper text noting it's also used for the WhatsApp bot.
 - `MemberRepository.findByWhatsAppPhoneE164` is deliberately unscoped, same
   documented precedent as `findByEmail` / `findByKeycloakUserId`.
-- A real normalization gotcha hit during implementation: libphonenumber's
-  "default region" only applies when a number has **no** leading `+` - it
-  never guesses that such a number might *already* carry a country code.
-  WhatsApp's own sender ids are exactly that shape (E.164 digits without `+`,
-  e.g. `4917012345678`), so naively parsing that against region `DE` silently
-  double-prepends the country code (`4917012345678` → `494917012345678`,
-  syntactically "valid" per libphonenumber's lenient length check, but wrong).
-  Fixed by trying the international (`+`-prefixed) interpretation first,
-  falling back to local-format parsing only if that fails.
+- A real normalization gotcha: libphonenumber's "default region" only applies
+  when a number has **no** leading `+` - it never guesses that such a number
+  might *already* carry a country code. WhatsApp's own sender ids are exactly
+  that shape (E.164 digits without `+`, e.g. `4917012345678`), so naively
+  parsing that against region `DE` silently double-prepends the country code
+  (`4917012345678` → `494917012345678`, syntactically "valid" per
+  libphonenumber's lenient length check, but wrong). Fixed by trying the
+  international (`+`-prefixed) interpretation first, falling back to
+  local-format parsing only if that fails.
 
 Multi-org collision (a member in more than one organization) is out of scope
 per issue #94, and the unique constraint on `whatsapp_phone_e164` makes a
@@ -155,35 +138,16 @@ message them back. `IntakeRequest.pushAddress` stays a reserved, unused field
 for the `"whatsapp"` channel; a channel that can't be reached by its inbound
 identifier alone (e.g. one that needs a numeric chat id) would populate it.
 
-## 5. The one thing that still isn't free - unchanged from the original plan
+## 5. Decisions
 
-WhatsApp's 24h free-form-messaging window is a hard platform rule, not
-something this implementation works around: **AC #3 fires exactly when it's
-usually violated** (a Bommelwart booking a receipt days later). This part of
-the original plan's analysis held up and nothing was built to route around
-it - see the original decision below.
-
-## 6. Decisions
-
-1. **Bot logic lives in `app.fuggs.fuggs-bot`, not `fuggs-app`.** Supersedes
-   the original plan's `DocumentIntakeService`-in-`DocumentResource`
-   approach - superseded because Telegram had already built and proven the
-   gateway-microservice shape first; extending it turned out to need far
-   less new code than the originally-planned direct integration.
+1. **Bot logic lives in `app.fuggs.fuggs-bot`, not `fuggs-app`.** A
+   gateway-microservice shape needs far less new code per channel than a
+   direct integration inside `DocumentResource` would.
 2. **WhatsApp identity reuses `Member.phone`**, derived automatically, no
-   separate form field. See §2 - a simplification made after initially
-   building (and then removing) a dedicated `whatsappPhone` field, on the
-   reasoning that the two are the same number for virtually every member.
-3. **AC #3 stays unimplemented for the paid, outside-24h, template-message
-   case.** Building the free-form path (works when a receipt is booked
-   within 24h of upload) was in scope and shipped; the template variant -
-   which conflicts with "keine statischen vorgefertigten Strings" and needs a
-   payment method plus realistically Business Verification - stays
-   documented but unbuilt, exactly as originally decided. No config flag was
-   added since there was nothing to flag off.
-4. **LLM fallback:** minimal static German text on OpenAI/DeepSeek failure,
-   logged at `WARN` - shipped as originally decided in `BotNotificationService`.
-5. **Schema:** no migration was written -
-   `quarkus.hibernate-orm.database.generation=drop-and-create` covers dev/test
-   as assumed. Still true: say the word if a database needs to survive a
-   deploy before this ships anywhere with persistent data.
+   separate form field. See §2.
+3. **LLM fallback:** minimal static German text on OpenAI/DeepSeek failure,
+   logged at `WARN`, in `BotNotificationService`.
+4. **Schema:** no migration was written -
+   `quarkus.hibernate-orm.database.generation=drop-and-create` covers
+   dev/test. Say the word if a database needs to survive a deploy before this
+   ships anywhere with persistent data.

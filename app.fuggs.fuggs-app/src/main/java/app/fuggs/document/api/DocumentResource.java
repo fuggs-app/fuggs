@@ -8,10 +8,12 @@ import app.fuggs.document.domain.DocumentStatus;
 import app.fuggs.document.domain.DocumentTag;
 import app.fuggs.document.domain.TagSource;
 import app.fuggs.document.domain.TradeParty;
+import app.fuggs.document.flow.DocumentAnalysisActivitiesService;
 import app.fuggs.document.repository.DocumentRepository;
 import app.fuggs.document.service.DocumentAnalysisService;
 import app.fuggs.document.service.DocumentDataService;
 import app.fuggs.document.service.DocumentFileService;
+import app.fuggs.document.service.DocumentIntakeService;
 import app.fuggs.member.domain.Member;
 import app.fuggs.member.repository.MemberRepository;
 import app.fuggs.messaging.BotNotificationService;
@@ -40,7 +42,9 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
@@ -77,13 +81,13 @@ public class DocumentResource extends Controller
 	DocumentDataService dataService;
 
 	@Inject
-	app.fuggs.document.service.DocumentIntakeService intakeService;
+    DocumentIntakeService intakeService;
 
 	@Inject
 	OrganizationContext organizationContext;
 
 	@Inject
-	app.fuggs.document.flow.DocumentAnalysisActivitiesService activitiesService;
+    DocumentAnalysisActivitiesService activitiesService;
 
 	@Inject
 	MemberRepository memberRepository;
@@ -292,9 +296,9 @@ public class DocumentResource extends Controller
 		byte[] content;
 		try
 		{
-			content = java.nio.file.Files.readAllBytes(file.uploadedFile());
+			content = Files.readAllBytes(file.uploadedFile());
 		}
-		catch (java.io.IOException e)
+		catch (IOException e)
 		{
 			throw new RuntimeException("Fehler beim Lesen der hochgeladenen Datei", e);
 		}

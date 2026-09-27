@@ -56,7 +56,8 @@ public class DocumentIntakeService
 	{
 		Document document = new Document();
 		document.setTotal(BigDecimal.ZERO);
-		document.setCurrencyCode("EUR");
+        // Placeholder will be filled by AI
+        document.setCurrencyCode("EUR");
 		document.setAnalysisStatus(AnalysisStatus.PENDING);
 		document.setDocumentStatus(DocumentStatus.UPLOADED);
 		document.setUploadedBy(uploadedBy);
@@ -65,7 +66,8 @@ public class DocumentIntakeService
 		fileService.handleFileUpload(document, content, fileName, contentType);
 		documentRepository.persist(document);
 
-		boolean analysisStarted = analysisService.triggerAnalysis(document, uploadedBy);
+        // Trigger AI analysis workflow (auto-start as per user preference)
+        boolean analysisStarted = analysisService.triggerAnalysis(document, uploadedBy);
 		if (!analysisStarted)
 		{
 			analysisService.markAnalysisFailed(document, AI_UNAVAILABLE_MESSAGE);
